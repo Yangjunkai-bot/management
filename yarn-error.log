@@ -1,0 +1,62 @@
+Arguments: 
+  /usr/local/bin/node /usr/local/bin/yarn
+
+PATH: 
+  /usr/local/opt/go@1.13/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/share/dotnet:~/.dotnet/tools:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/usr/local/opt/go@1.13/bin
+
+Yarn version: 
+  1.22.10
+
+Node version: 
+  14.15.5
+
+Platform: 
+  darwin x64
+
+Trace: 
+  Error: https://registry.yarnpkg.com/highlight.js/-/highlight.js-10.6.0.tgz: ESOCKETTIMEDOUT
+      at ClientRequest.<anonymous> (/usr/local/lib/node_modules/yarn/lib/cli.js:141289:19)
+      at Object.onceWrapper (events.js:421:28)
+      at ClientRequest.emit (events.js:315:20)
+      at TLSSocket.emitRequestTimeout (_http_client.js:784:9)
+      at Object.onceWrapper (events.js:421:28)
+      at TLSSocket.emit (events.js:327:22)
+      at TLSSocket.Socket._onTimeout (net.js:483:8)
+      at listOnTimeout (internal/timers.js:554:17)
+      at processTimers (internal/timers.js:497:7)
+
+npm manifest: 
+  {
+    "name": "vue-manage-system",
+    "version": "4.2.0",
+    "private": true,
+    "scripts": {
+      "dev": "npm run serve",
+      "serve": "vue-cli-service serve",
+      "build": "vue-cli-service build"
+    },
+    "dependencies": {
+      "axios": "^0.18.0",
+      "babel-polyfill": "^6.26.0",
+      "element-ui": "^2.11.0",
+      "mavon-editor": "^2.6.17",
+      "vue": "^2.6.10",
+      "vue-cropperjs": "^3.0.0",
+      "vue-i18n": "^8.10.0",
+      "vue-quill-editor": "^3.0.6",
+      "vue-router": "^3.0.3",
+      "vue-schart": "^2.0.0",
+      "vuedraggable": "^2.17.0"
+    },
+    "devDependencies": {
+      "@vue/cli-plugin-babel": "^3.9.0",
+      "@vue/cli-service": "^3.9.0",
+      "vue-template-compiler": "^2.6.10"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
