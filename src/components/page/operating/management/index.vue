@@ -3,7 +3,7 @@
     <div class="crumbs">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item>
-          <i class="el-icon-lx-cascades"></i> 视频分类
+          <i class="el-icon-lx-cascades"></i> 公告管理
         </el-breadcrumb-item>
       </el-breadcrumb>
     </div>
@@ -11,7 +11,7 @@
       <div class="handle-box">
         <el-button type="primary"
                    @click="handleEdit('add')"
-                   class="mr10">新增视频分类</el-button>
+                   class="mr10">新增公告</el-button>
       </div>
       <el-table :data="tableData"
                 stripe
@@ -21,19 +21,26 @@
                 header-cell-class-name="table-header">
         <el-table-column type="index"
                          label="排序"
+                         align='center'
                          width="50">
         </el-table-column>
         <el-table-column prop="title"
+                         align='center'
+                         show-overflow-tooltip
                          label="公告标题"></el-table-column>
-        <el-table-column label="公告类型">
+        <el-table-column label="公告类型"
+                         align='center'>
           <template slot-scope="scope">
             {{options[scope.row.type].label}}
           </template>
         </el-table-column>
         <el-table-column prop="content"
+                         align='center'
+                         show-overflow-tooltip
                          label="公告内容">
         </el-table-column>
-        <el-table-column label="公告照片">
+        <el-table-column label="公告照片"
+                         align='center'>
           <template slot-scope="scope">
             <el-image style="width: 100px; height: 100px"
                       :src="scope.row.noticeImg"
@@ -41,20 +48,29 @@
             </el-image>
           </template>
         </el-table-column>
-        <el-table-column prop="accepter"
-                         label="接收人"></el-table-column>
-        <el-table-column label="开始时间">
+        <el-table-column align='center'
+                         label="接收人">
+          <template slot-scope="scope">
+            {{scope.row.accepter ?scope.rpw.accepter : '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="开始时间"
+                         show-overflow-tooltip
+                         align='center'>
           <template slot-scope="scope">
             {{scope.row.startTime | formatDate}}
           </template>
         </el-table-column>
-        <el-table-column label="结束时间">
+        <el-table-column label="结束时间"
+                         show-overflow-tooltip
+                         align='center'>
           <template slot-scope="scope">
             {{scope.row.endTime | formatDate}}
           </template>
         </el-table-column>
         <el-table-column prop="createBy"
-                         label="最后编辑人"></el-table-column>
+                         label="最后编辑人"
+                         align='center'></el-table-column>
         <el-table-column label="状态">
           <template slot-scope="scope">
             {{status[scope.row.status].label}}
@@ -175,14 +191,11 @@ export default {
       },
       operationTitle: '',
       tableData: [],
-      multipleSelection: [],
       editVisible: false,
       pageTotal: 0,
       form: {
         fileList: [],
       },
-      idx: -1,
-      id: -1,
       rules: {
         title: [
           { required: true, message: '请输入公告标题', trigger: 'blur' },
@@ -235,8 +248,6 @@ export default {
     getData () {
       this.loading = true
       noticePage(this.query).then(res => {
-        console.log(res)
-
         this.tableData = res.data.body.list;
         this.tableData.forEach(element => {
           element.startTime = element.startTime * 1000
@@ -254,15 +265,11 @@ export default {
     },
     uploadFile (param) {
       this.form.fileList = []
-      console.log(param.file.name)
       var form = new FormData();
       form.append("file", param.file);
       form.append("type", 2);
       uploadPic(form).then((res) => {
-        console.log(res)
         if (res.data.code === 0) {
-          console.log(this.form)
-          console.log(res.data.body)
           this.form.noticeImg = res.data.body
           this.form.fileList = [{ name: param.file.name, url: this.form.noticeImg }]
         } else {
@@ -276,8 +283,6 @@ export default {
     },
     // 删除操作
     handleDelete (index, row) {
-      console.log(row)
-
       // 二次确认删除
       this.$confirm('确定要删除吗？', '提示', {
         type: 'warning'
@@ -310,7 +315,7 @@ export default {
     // 编辑操作
     handleEdit (operation, index, row) {
       if (operation === 'add') {
-        this.operationTitle = '新增视频分类'
+        this.operationTitle = '新增公告'
         this.form = {}
         this.editVisible = true;
         this.$nextTick(() => {
@@ -318,7 +323,7 @@ export default {
           this.$refs.clearUpload.clearFiles()
         })
       } else {
-        this.operationTitle = '编辑视频分类'
+        this.operationTitle = '编辑公告'
         this.form = JSON.parse(JSON.stringify(row));
         this.form.fileList = [{ name: '预选图片', url: this.form.noticeImg }]
         this.editVisible = true;
@@ -330,19 +335,17 @@ export default {
     },
     // 保存编辑
     saveEdit () {
-      console.log(this.form)
       this.$refs.formRules.validate((valid) => {
         if (valid) {
           this.editVisible = false;
-          // if (this.operationTitle === '新增视频分类') {
           this.form.status = '2';
           this.form.startTime = this.form.startTime / 1000;
           this.form.endTime = this.form.endTime / 1000;
 
-          (this.operationTitle === '新增视频分类' ? addNotice : updateNotice)(this.form).then((res) => {
+          (this.operationTitle === '新增公告' ? addNotice : updateNotice)(this.form).then((res) => {
             if (res.data.code === 0) {
               this.$message({
-                message: this.operationTitle === '新增视频分类' ? '新增成功' : '编辑成功',
+                message: this.operationTitle === '新增公告' ? '新增成功' : '编辑成功',
                 type: 'success'
               });
               this.getData()
@@ -354,33 +357,12 @@ export default {
             }
 
           })
-          // } else {
-
-          //   updateNotice(this.form).then((res) => {
-          //     if (res.data.code === 0) {
-          //       this.$message({
-          //         message: 编辑成功,
-          //         type: 'success'
-          //       });
-          //       this.getData()
-          //     } else {
-          //       this.$message({
-          //         message: res.data.msg,
-          //         type: 'warning'
-          //       });
-          //     }
-
-          //   })
-          // }
         } else {
-          console.log('error submit!!');
           return false;
         }
       });
-
     },
     handlePageChange (page) {
-      console.log(page)
       this.query.page = page
       this.getData()
     }
