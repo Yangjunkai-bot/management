@@ -10,6 +10,11 @@ export default new Router({
       redirect: '/dashboard'
     },
     {
+      path: '/login',
+      component: () => import(/* webpackChunkName: "login" */ '../components/page/Login.vue'),
+      meta: { title: '登录' }
+    },
+    {
       path: '/',
       component: () => import(/* webpackChunkName: "home" */ '../components/common/Home.vue'),
       meta: { title: '自述文件' },
@@ -124,11 +129,7 @@ export default new Router({
         }
       ]
     },
-    {
-      path: '/login',
-      component: () => import(/* webpackChunkName: "login" */ '../components/page/Login.vue'),
-      meta: { title: '登录' }
-    },
+
     {
       path: '*',
       redirect: '/404'
