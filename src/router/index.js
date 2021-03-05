@@ -45,6 +45,24 @@ export default new Router({
           meta: { title: '公告管理' }
         },
         {
+          path: '/administrator',
+          redirect: '/child',
+          component: () => import(/* webpackChunkName: "community" */ '@/components/page/administrator'),
+          meta: { title: '管理员账号' },
+          children: [
+            {
+              path: '/child',
+              component: () => import(/* webpackChunkName: "community" */ '@/components/page/administrator/child'),
+              meta: { title: '子账号设置' }
+            },
+            {
+              path: '/role',
+              component: () => import(/* webpackChunkName: "community" */ '@/components/page/administrator/role'),
+              meta: { title: '角色管理' }
+            }
+          ]
+        },
+        {
           path: '/icon',
           component: () => import(/* webpackChunkName: "icon" */ '../components/page/Icon.vue'),
           meta: { title: '自定义图标' }

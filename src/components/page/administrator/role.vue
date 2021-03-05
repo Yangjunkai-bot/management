@@ -1,0 +1,173 @@
+<template>
+  <div>
+    <RoleModel :modelTitle='modelTitle'
+               :defaultVal='defaultVal'
+               ref="rolemodel" />
+    <div class="handle-box">
+      <el-button type="primary"
+                 @click="handleEdit('add')"
+                 class="mr10">新增角色</el-button>
+    </div>
+    <el-table :data="tableData"
+              v-loading="loading"
+              stripe
+              class="table"
+              ref="multipleTable"
+              header-cell-class-name="table-header">
+      <el-table-column type="index"
+                       label="排序"
+                       align='center'
+                       show-overflow-tooltip
+                       width="50">
+
+      </el-table-column>
+      <el-table-column prop="name"
+                       show-overflow-tooltip
+                       align='center'
+                       label="角色名称"></el-table-column>
+      <el-table-column label="权限数"
+                       align='center'>
+        <template slot-scope="scope">{{scope.row.permissionNum}}</template>
+      </el-table-column>
+      <el-table-column label="子账号数"
+                       align='center'
+                       show-overflow-tooltip>
+        <template slot-scope="scope">{{scope.row.userNum}}</template>
+      </el-table-column>
+      <el-table-column align='center'
+                       show-overflow-tooltip
+                       label="备注">
+        <template slot-scope="scope">{{scope.row.address ? scope.row.address:'-'}}</template>
+      </el-table-column>
+      <el-table-column label="操作"
+                       width="120"
+                       align="center">
+        <template slot-scope="scope">
+          <el-button type="text"
+                     @click="handleEdit('edit', scope.row)">编辑</el-button>
+          <el-button type="text"
+                     class="red"
+                     @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+    <div class="pagination">
+      <el-pagination background
+                     layout="total, prev, pager, next"
+                     :current-page="query.page"
+                     :page-size="query.pageSize"
+                     :total="pageTotal"
+                     @current-change="handlePageChange"></el-pagination>
+    </div>
+  </div>
+</template>
+
+<script>
+import RoleModel from './componets/rolemodel'
+import { roleList } from '@/api/index';
+export default {
+  name: 'basetable',
+  data () {
+    return {
+      operationTitle: '',
+      tableData: [],
+      pageTotal: 0,
+      form: {},
+      defaultVal: null,
+      modelTitle: "",
+      loading: false,
+      query: {
+        "current": 1,
+        "size": 10
+      },
+      pageTotal: 0,
+      editVisible: false,
+    };
+  },
+  components: {
+    RoleModel
+  },
+  created () {
+    this.getData();
+  },
+  methods: {
+    // 获取 easy-mock 的模拟数据
+    getData () {
+      this.loading = true
+      roleList(this.query).then(res => {
+        this.tableData = res.data.body.records;
+        this.tableData.forEach(element => {
+        });
+        this.pageTotal = res.data.body.total || 0
+        this.loading = false
+      })
+        .catch(error => {
+          this.loading = false
+        })
+    },
+    handlePageChange (page) {
+      this.query.current = page
+      this.getData()
+    },
+    handleEdit (title, value) {
+      this.$refs.rolemodel.openDia();
+      if (title === 'add') {
+        this.modelTitle = '新增角色'
+      } else {
+        console.log(value)
+        this.modelTitle = '编辑角色'
+        this.defaultVal = value
+
+      }
+      console.log(this.editVisible)
+    },
+    // 删除操作
+    handleDelete (index, row) {
+      // 二次确认删除
+      this.$confirm('确定要删除吗？', '提示', {
+        type: 'warning'
+      })
+        .then(() => {
+          this.$message.success('删除成功');
+          this.tableData.splice(index, 1);
+        })
+        .catch(() => { });
+    },
+  }
+};
+</script>
+
+<style scoped>
+.modelIpntWidth {
+    width: 100%;
+}
+.handle-box {
+    text-align: right;
+    margin-bottom: 10px;
+}
+
+.handle-select {
+    width: 120px;
+}
+
+.handle-input {
+    width: 300px;
+    display: inline-block;
+}
+.table {
+    width: 100%;
+    font-size: 14px;
+}
+.red {
+    color: #ff0000;
+}
+.mr10 {
+    margin-right: 10px;
+}
+.table-td-thumb {
+    display: block;
+    margin: auto;
+    width: 40px;
+    height: 40px;
+}
+</style>

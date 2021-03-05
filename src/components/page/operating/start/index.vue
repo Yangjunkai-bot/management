@@ -173,8 +173,8 @@ export default {
     }
     return {
       query: {
-        pageSize: 10,
-        page: 1,
+        size: 10,
+        current: 1,
         type: 1
       },
       operationTitle: '',
@@ -258,7 +258,7 @@ export default {
       })
     },
     handlePageChange (page) {
-      this.query.page = page
+      this.query.current = page
       this.getData()
     },
     // 触发搜索按钮

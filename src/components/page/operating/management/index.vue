@@ -141,6 +141,7 @@
         <el-form-item label="结束时间"
                       prop="endTime">
           <el-date-picker v-model="form.endTime"
+                          :picker-options="pickerOptionsEnd"
                           class="modelIpntWidth"
                           type="datetime"
                           placeholder="选择日期"
@@ -186,8 +187,8 @@ export default {
   data () {
     return {
       query: {
-        "page": 1,
-        "pageSize": 10
+        "current": 1,
+        "size": 10
       },
       operationTitle: '',
       tableData: [],
@@ -204,12 +205,17 @@ export default {
         type: [
           { required: true, message: '请选择公告类型', trigger: 'change' }
         ],
-        startTime: [
-          { type: 'date', required: true, message: '请选择开始日期', trigger: 'change' }
-        ],
-        endTime: [
-          { type: 'date', required: true, message: '请选择结束日期', trigger: 'change' }
-        ],
+        startTime: [{
+          required: true,
+          message: '请选择开始时间',
+          trigger: 'change'
+        }],
+        endTime: [{
+          required: true,
+          message: '请选择结束时间',
+          validator: this.pickerOptionsEnd,
+          trigger: 'change'
+        }],
         fileList: [{
           message: '请上传',
           trigger: 'change',
@@ -218,6 +224,14 @@ export default {
         content: [
           { required: true, message: '请输入公告内容', trigger: 'blur' },
         ],
+      },
+      pickerOptionsEnd: {
+        disabledDate: time => {
+          let beginDateVal = this.form.startTime;
+          if (beginDateVal) {
+            return time.getTime() < new Date(beginDateVal).getTime();
+          }
+        }
       },
       loading: false,
 
@@ -363,7 +377,7 @@ export default {
       });
     },
     handlePageChange (page) {
-      this.query.page = page
+      this.query.current = page
       this.getData()
     }
   }

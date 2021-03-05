@@ -38,3 +38,19 @@ export function addAd (params) {
 export function updateAd (params) {
   return http.post(`${resquest}/sys/advertisingManage/updateAd`, params)
 }
+// 权限列表
+export function permissionList (params) {
+  return http.get(`${resquest}/sys/permission/list/${params}`)
+}
+// 角色列表
+export function roleList (params) {
+  return http.post(`${resquest}/sys/role/list`, params)
+}
+// 角色新增
+export function roleAdd (params) {
+  return http.post(`${resquest}/sys/role/save`, params)
+}
+// 角色编辑
+export function roleUpdate (params) {
+  return http.put(`${resquest}/sys/role/update`, params)
+}
