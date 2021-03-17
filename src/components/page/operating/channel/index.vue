@@ -3,7 +3,7 @@
     <div class="crumbs">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item>
-          <i class="el-icon-lx-cascades"></i> 视频分类
+          <i class="el-icon-lx-cascades"></i> 渠道管理
         </el-breadcrumb-item>
       </el-breadcrumb>
     </div>
@@ -11,7 +11,7 @@
       <div class="handle-box">
         <el-button type="primary"
                    @click="handleEdit('add')"
-                   class="mr10">新增视频分类</el-button>
+                   class="mr10">新增渠道</el-button>
       </div>
       <el-table :data="tableData"
                 v-loading="loading"
@@ -19,7 +19,7 @@
                 class="table"
                 ref="multipleTable"
                 header-cell-class-name="table-header">
-        <el-table-column prop="sequence"
+        <el-table-column type="index"
                          align='center'
                          label="排序"
                          width="50">
@@ -27,31 +27,19 @@
         <el-table-column prop="name"
                          align='center'
                          show-overflow-tooltip
-                         label="分类名称"></el-table-column>
-        <el-table-column label="分类说明"
+                         label="渠道名称"></el-table-column>
+        <el-table-column label="渠道标示"
                          align='center'
                          show-overflow-tooltip>
-          <template slot-scope="scope">{{scope.row.description ? scope.row.description : '-'}}</template>
+          <template slot-scope="scope">{{scope.row.code ? scope.row.code : '-'}}</template>
         </el-table-column>
-        <el-table-column prop="videoCount"
-                         label="视频数量"
-                         align='center'
-                         show-overflow-tooltip></el-table-column>
+
         <el-table-column label="添加时间"
                          align='center'
                          show-overflow-tooltip>
-          <template slot-scope="scope">
-            {{scope.row.createTime ?  $options.filters.formatDate(scope.row.createTime) : '-'}}
-          </template>
+          <template slot-scope="scope">{{scope.row.createTime |formatDate}}</template>
         </el-table-column>
-        <el-table-column prop="updateTime"
-                         label="最后编辑时间"
-                         align='center'
-                         show-overflow-tooltip>
-          <template slot-scope="scope">
-            {{scope.row.updateTime ?  $options.filters.formatDate(scope.row.updateTime) : '-'}}
-          </template>
-        </el-table-column>
+        】
         <el-table-column label="最后编辑人"
                          align='center'
                          show-overflow-tooltip>
@@ -63,9 +51,6 @@
           <template slot-scope="scope">
             <el-button type="text"
                        @click="handleEdit('edit',scope.$index, scope.row)">编辑</el-button>
-            <el-button type="text"
-                       class="red"
-                       @click="handleDelete(scope.$index, scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -76,31 +61,20 @@
                :show-close='false'
                :close-on-click-modal='false'
                :visible.sync="editVisible"
-               width="600px">
+               width="40%">
       <el-form ref="form"
                :rules="rules"
                :model="form"
-               label-width="80px">
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="排序"
-                          prop="sequence">
-              <el-input-number v-model="form.sequence"
-                               controls-position="right"
-                               class="modelIpntWidth"></el-input-number>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="分类名称"
-                          prop="name">
-              <el-input v-model="form.name"></el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-form-item label="分类说明"
-                      prop="description">
+               label-width="90px">
+        <el-form-item label="渠道名称"
+                      prop="name">
+          <el-input v-model="form.name"></el-input>
+        </el-form-item>
+
+        <el-form-item label="渠道说明"
+                      prop="code">
           <el-input type="textarea"
-                    v-model="form.description"></el-input>
+                    v-model="form.code"></el-input>
         </el-form-item>
       </el-form>
       <span slot="footer"
@@ -115,7 +89,7 @@
 
 <script>
 import moment from 'moment'
-import { MovieClassificationList, addMovieClassification, updateMovieClassification } from '@/api/index';
+import { getChannelList, addOperationChannel, updateOperationChannel } from '@/api/index';
 export default {
   name: 'basetable',
   data () {
@@ -125,19 +99,17 @@ export default {
       multipleSelection: [],
       delList: [],
       editVisible: false,
+      pageTotal: 0,
       loading: false,
       form: {},
       rules: {
         name: [
-          { required: true, message: '请输入分类名称', trigger: 'blur' },
-          { max: 20, message: '最大输入20个字符', trigger: 'blur' }
+          { required: true, message: '渠道名称', trigger: 'blur' },
+          { max: 10, message: '最大输入10个字符', trigger: 'blur' }
         ],
-        description: [
-          { required: true, message: '请输入分类说明', trigger: 'blur' },
-          { max: 20, message: '最大输入20个字符', trigger: 'blur' }
-        ],
-        sequence: [
-          { required: true, message: '请输入排序', trigger: 'blur' },
+        code: [
+          { required: true, message: '渠道标示', trigger: 'blur' },
+          { max: 10, message: '最大输入10个字符', trigger: 'blur' }
         ],
       }
     };
@@ -147,18 +119,15 @@ export default {
   },
   filters: {
     formatDate: function (value) {
-      if (value) {
-        const newValue = value * 1000
-        return moment(newValue).format('YYYY-MM-DD HH:mm:ss')
-      }
-
+      const newValue = value * 1000
+      return moment(newValue).format('YYYY-MM-DD HH:mm:ss')
     }
   },
   methods: {
     // 获取 easy-mock 的模拟数据
     getData () {
       this.loading = true
-      MovieClassificationList().then(res => {
+      getChannelList().then(res => {
         this.loading = false
         this.tableData = res.data.body
       });
@@ -170,25 +139,19 @@ export default {
         type: 'warning'
       })
         .then(() => {
-          row.status = 1
-          updateMovieClassification(row).then((res) => {
-            if (res.data.code === 0) {
-              this.$message.success('删除成功');
-              this.getData()
-            }
-          })
-          t
+          this.$message.success('删除成功');
+          this.tableData.splice(index, 1);
         })
         .catch(() => { });
     },
     // 编辑操作
     handleEdit (operation, index, row) {
       if (operation === 'add') {
-        this.operationTitle = '新增视频分类'
+        this.operationTitle = '新增渠道'
         this.form = {}
         this.editVisible = true;
       } else {
-        this.operationTitle = '编辑视频分类'
+        this.operationTitle = '编辑渠道'
         this.form = JSON.parse(JSON.stringify(row));
         this.editVisible = true;
       }
@@ -201,10 +164,10 @@ export default {
       this.$refs[formName].validate((valid) => {
         if (valid) {
           this.editVisible = false;
-          (this.operationTitle === '新增视频分类' ? addMovieClassification : updateMovieClassification)(this.form).then((res) => {
+          (this.operationTitle === '新增渠道' ? addOperationChannel : updateOperationChannel)(this.form).then((res) => {
             if (res.data.code === 0) {
               this.$message({
-                message: this.operationTitle === '新增视频分类' ? '新增成功' : '编辑成功',
+                message: this.operationTitle === '新增渠道' ? '新增成功' : '编辑成功',
                 type: 'success'
               });
               this.getData()

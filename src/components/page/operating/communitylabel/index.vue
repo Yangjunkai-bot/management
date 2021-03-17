@@ -3,7 +3,7 @@
     <div class="crumbs">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item>
-          <i class="el-icon-lx-cascades"></i> 视频分类
+          <i class="el-icon-lx-cascades"></i> 社区标签
         </el-breadcrumb-item>
       </el-breadcrumb>
     </div>
@@ -11,7 +11,7 @@
       <div class="handle-box">
         <el-button type="primary"
                    @click="handleEdit('add')"
-                   class="mr10">新增视频分类</el-button>
+                   class="mr10">新增社区标签</el-button>
       </div>
       <el-table :data="tableData"
                 v-loading="loading"
@@ -27,14 +27,14 @@
         <el-table-column prop="name"
                          align='center'
                          show-overflow-tooltip
-                         label="分类名称"></el-table-column>
-        <el-table-column label="分类说明"
+                         label="标签名称"></el-table-column>
+        <el-table-column label="标签说明"
                          align='center'
                          show-overflow-tooltip>
           <template slot-scope="scope">{{scope.row.description ? scope.row.description : '-'}}</template>
         </el-table-column>
-        <el-table-column prop="videoCount"
-                         label="视频数量"
+        <el-table-column prop="topicCount"
+                         label="发帖数量"
                          align='center'
                          show-overflow-tooltip></el-table-column>
         <el-table-column label="添加时间"
@@ -44,8 +44,7 @@
             {{scope.row.createTime ?  $options.filters.formatDate(scope.row.createTime) : '-'}}
           </template>
         </el-table-column>
-        <el-table-column prop="updateTime"
-                         label="最后编辑时间"
+        <el-table-column label="最后编辑时间"
                          align='center'
                          show-overflow-tooltip>
           <template slot-scope="scope">
@@ -80,7 +79,7 @@
       <el-form ref="form"
                :rules="rules"
                :model="form"
-               label-width="80px">
+               label-width="90px">
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="排序"
@@ -91,13 +90,13 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="分类名称"
+            <el-form-item label="标签名称"
                           prop="name">
               <el-input v-model="form.name"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="分类说明"
+        <el-form-item label="标签说明"
                       prop="description">
           <el-input type="textarea"
                     v-model="form.description"></el-input>
@@ -115,25 +114,39 @@
 
 <script>
 import moment from 'moment'
-import { MovieClassificationList, addMovieClassification, updateMovieClassification } from '@/api/index';
+import { getTagList, addTag, updateTag } from '@/api/index';
 export default {
   name: 'basetable',
   data () {
+    let validUsername = (rule, value, callback) => {
+      const regName = /(?<=#)/
+      if (value === "") {
+        callback(new Error("请输入话题名称"));
+      } else if (!regName.test(value)) {
+        callback(
+          new Error(
+            "必须以#开头"
+          )
+        );
+      } else {
+        callback()
+      }
+    }
     return {
       operationTitle: '',
       tableData: [],
       multipleSelection: [],
       delList: [],
       editVisible: false,
+      pageTotal: 0,
       loading: false,
       form: {},
       rules: {
         name: [
-          { required: true, message: '请输入分类名称', trigger: 'blur' },
-          { max: 20, message: '最大输入20个字符', trigger: 'blur' }
+          { required: true, validator: validUsername, trigger: "blur" }
         ],
         description: [
-          { required: true, message: '请输入分类说明', trigger: 'blur' },
+          { required: true, message: '请输入话题说明', trigger: 'blur' },
           { max: 20, message: '最大输入20个字符', trigger: 'blur' }
         ],
         sequence: [
@@ -158,7 +171,7 @@ export default {
     // 获取 easy-mock 的模拟数据
     getData () {
       this.loading = true
-      MovieClassificationList().then(res => {
+      getTagList().then(res => {
         this.loading = false
         this.tableData = res.data.body
       });
@@ -170,25 +183,25 @@ export default {
         type: 'warning'
       })
         .then(() => {
-          row.status = 1
-          updateMovieClassification(row).then((res) => {
+          row.status = '1'
+          updateTag(row).then((res) => {
             if (res.data.code === 0) {
               this.$message.success('删除成功');
               this.getData()
             }
           })
-          t
+
         })
         .catch(() => { });
     },
     // 编辑操作
     handleEdit (operation, index, row) {
       if (operation === 'add') {
-        this.operationTitle = '新增视频分类'
+        this.operationTitle = '新增社区标签'
         this.form = {}
         this.editVisible = true;
       } else {
-        this.operationTitle = '编辑视频分类'
+        this.operationTitle = '编辑社区标签'
         this.form = JSON.parse(JSON.stringify(row));
         this.editVisible = true;
       }
@@ -201,10 +214,10 @@ export default {
       this.$refs[formName].validate((valid) => {
         if (valid) {
           this.editVisible = false;
-          (this.operationTitle === '新增视频分类' ? addMovieClassification : updateMovieClassification)(this.form).then((res) => {
+          (this.operationTitle === '新增社区标签' ? addTag : updateTag)(this.form).then((res) => {
             if (res.data.code === 0) {
               this.$message({
-                message: this.operationTitle === '新增视频分类' ? '新增成功' : '编辑成功',
+                message: this.operationTitle === '新增社区标签' ? '新增成功' : '编辑成功',
                 type: 'success'
               });
               this.getData()

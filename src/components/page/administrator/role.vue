@@ -10,6 +10,7 @@
     </div>
     <el-table :data="tableData"
               v-loading="loading"
+              :height="tableHeight"
               stripe
               class="table"
               ref="multipleTable"
@@ -53,10 +54,12 @@
     </el-table>
     <div class="pagination">
       <el-pagination background
-                     layout="total, prev, pager, next"
-                     :current-page="query.page"
-                     :page-size="query.pageSize"
+                     :page-sizes="[20, 50, 100, 200]"
+                     layout="total, sizes, prev, pager, next, jumper"
+                     :current-page="query.current"
+                     :page-size="query.size"
                      :total="pageTotal"
+                     @size-change="handleSizeChange"
                      @current-change="handlePageChange"></el-pagination>
     </div>
   </div>
@@ -75,10 +78,11 @@ export default {
       form: {},
       defaultVal: null,
       modelTitle: "",
+      tableHeight: window.innerHeight - 370,
       loading: false,
       query: {
         "current": 1,
-        "size": 10
+        "size": 20
       },
       pageTotal: 0,
       editVisible: false,
@@ -96,8 +100,6 @@ export default {
       this.loading = true
       roleList(this.query).then(res => {
         this.tableData = res.data.body.records;
-        this.tableData.forEach(element => {
-        });
         this.pageTotal = res.data.body.total || 0
         this.loading = false
       })
@@ -114,24 +116,31 @@ export default {
       if (title === 'add') {
         this.modelTitle = '新增角色'
       } else {
-        console.log(value)
         this.modelTitle = '编辑角色'
         this.defaultVal = value
 
       }
-      console.log(this.editVisible)
+    },
+    handleSizeChange (val) {
+      this.$set(this.query, 'size', val);
+      this.getData()
     },
     // 删除操作
     handleDelete (index, row) {
-      // 二次确认删除
-      this.$confirm('确定要删除吗？', '提示', {
-        type: 'warning'
-      })
-        .then(() => {
-          this.$message.success('删除成功');
-          this.tableData.splice(index, 1);
+      if (row.userNum === 0) {
+        // 二次确认删除
+        this.$confirm('确定要删除吗？', '提示', {
+          type: 'warning'
         })
-        .catch(() => { });
+          .then(() => {
+            this.$message.success('删除成功');
+            this.tableData.splice(index, 1);
+          })
+          .catch(() => { });
+      } else {
+        this.$message.warning('子账号为0时才能删除');
+      }
+
     },
   }
 };

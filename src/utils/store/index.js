@@ -6,15 +6,13 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
-    pathName: "111",
-    currDbSource: {},
-    currJobData: {},
-    DbSource: []
+    username: "",
+
   },
   mutations: {
-    // 保存当前菜单栏的路径
-    savePath (state, pathName) {
-      state.pathName = pathName;
+    // 保存当前登陆的用户名
+    saveUserName (state, username) {
+      state.username = username;
     },
     // 保存当前点击的数据源
     saveCurrDbSource (state, currDbSource) {

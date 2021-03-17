@@ -51,12 +51,12 @@ export default {
       collapse: false,
       items: [
         {
-          icon: 'el-icon-lx-home',
+          icon: 'el-icon-edit',
           index: 'dashboard',
           title: '系统首页'
         },
         {
-          icon: 'el-icon-lx-home',
+          icon: 'el-icon-data-line',
           index: 'operating',
           title: '运营管理',
           subs: [
@@ -65,8 +65,8 @@ export default {
               title: '视频分类'
             },
             {
-              index: 'community',
-              title: '社区管理'
+              index: 'communitylabel',
+              title: '社区标签管理'
             },
             {
               index: 'start',
@@ -75,82 +75,99 @@ export default {
             {
               index: 'management',
               title: '公告管理'
+            },
+            {
+              index: 'channel',
+              title: '渠道管理'
             }
           ]
         },
         {
-          icon: 'el-icon-lx-cascades',
-          index: 'table',
-          title: '基础表格'
-        },
-        {
-          icon: 'el-icon-lx-cascades',
-          index: 'administrator',
-          title: '管理员账号'
-        },
-        {
-          icon: 'el-icon-lx-copy',
-          index: 'tabs',
-          title: 'tab选项卡'
-        },
-        {
-          icon: 'el-icon-lx-calendar',
-          index: '3',
-          title: '表单相关',
+          icon: 'el-icon-s-custom',
+          index: 'backstage',
+          title: '后台管理',
           subs: [
             {
-              index: 'form',
-              title: '基本表单'
+              index: 'administrator',
+              title: '管理员账号'
             },
             {
-              index: '3-2',
-              title: '三级菜单',
-              subs: [
-                {
-                  index: 'editor',
-                  title: '富文本编辑器'
-                },
-                {
-                  index: 'markdown',
-                  title: 'markdown编辑器'
-                }
-              ]
+              index: 'journal',
+              title: '后台操作日志'
             },
-            {
-              index: 'upload',
-              title: '文件上传'
-            }
           ]
         },
         {
-          icon: 'el-icon-lx-emoji',
-          index: 'icon',
-          title: '自定义图标'
-        },
-        {
-          icon: 'el-icon-pie-chart',
-          index: 'charts',
-          title: 'schart图表'
-        },
-        {
-          icon: 'el-icon-rank',
-          index: '6',
-          title: '拖拽组件',
+          icon: 'el-icon-user-solid',
+          index: 'user',
+          title: '用户管理',
           subs: [
             {
-              index: 'drag',
-              title: '拖拽列表'
+              index: 'usermanagement',
+              title: '会员管理'
             },
-            {
-              index: 'dialog',
-              title: '拖拽弹框'
-            }
           ]
         },
         {
-          icon: 'el-icon-lx-global',
-          index: 'i18n',
-          title: '国际化功能'
+          icon: 'el-icon-user-solid',
+          index: 'financial',
+          title: '财务管理',
+          subs: [
+            {
+              index: 'merchants',
+              title: '商户管理'
+            },
+          ]
+        },
+        {
+          icon: 'el-icon-document',
+          index: 'activity',
+          title: '活动管理',
+          subs: [
+            {
+              index: 'signin',
+              title: '签到活动'
+            },
+          ]
+        },
+        {
+          icon: 'el-icon-s-order',
+          index: 'resources',
+          title: '资源管理',
+          subs: [
+            {
+              index: 'movie',
+              title: '视频管理'
+            },
+            {
+              index: 'television',
+              title: '电视管理'
+            },
+            {
+              index: 'shortVideo',
+              title: '短视频管理'
+            },
+            {
+              index: 'community',
+              title: '社区管理'
+            }
+
+          ]
+        },
+        {
+          icon: 'el-icon-tickets',
+          index: 'report',
+          title: '报表管理',
+          subs: [
+            {
+              index: 'reportoperating',
+              title: '运营报表'
+            },
+            {
+              index: 'vedio',
+              title: '视频报表'
+            }
+          ]
         },
         {
           icon: 'el-icon-lx-warn',
@@ -166,11 +183,6 @@ export default {
               title: '404页面'
             }
           ]
-        },
-        {
-          icon: 'el-icon-lx-redpacket_fill',
-          index: '/donate',
-          title: '支持作者'
         }
       ]
     };

@@ -1,37 +1,20 @@
 <template>
   <div>
-
     <div class="handle-box">
-      <el-button type="primary"
-                 class="handle-del mr10"
-                 @click="delAllSelection">批量变更角色</el-button>
-      <el-select v-model="query.address"
-                 placeholder="查询条件"
-                 class="handle-select mr10">
-        <el-option key="1"
-                   label="后台账号"
-                   value="广东省"></el-option>
-        <el-option key="2"
-                   label="后台昵称"
-                   value="湖南省"></el-option>
-        <el-option key="3"
-                   label="角色"
-                   value="湖南省"></el-option>
-      </el-select>
-      <el-input v-model="query.name"
-                placeholder="用户名"
-                class="handle-input mr10"></el-input>
-      <el-button type="primary"
-                 icon="el-icon-search"
-                 @click="handleSearch">搜索</el-button>
-      <el-button type="danger"
-                 @click="handleSearch">重制</el-button>
+
+      <child-header @selectContent='selectContent'
+                    @getData='getData'
+                    @closeSelect='closeSelect'
+                    :multipleSelection='multipleSelection'
+                    :query='query'></child-header>
     </div>
     <el-table :data="tableData"
               stripe
+              :height="tableHeight"
               v-loading="loading"
               class="table"
               ref="multipleTable"
+              @selection-change="handleSelectionChange"
               header-cell-class-name="table-header">
       <el-table-column type="selection"
                        width="55"
@@ -41,130 +24,270 @@
                        align='center'
                        width="50">
       </el-table-column>
-      <el-table-column prop="name"
+      <el-table-column prop="username"
                        label="后台账号"></el-table-column>
-      <el-table-column prop="name"
+      <el-table-column prop="nickName"
                        label="后台昵称"></el-table-column>
-      <el-table-column prop="address"
+      <el-table-column prop="roleName"
                        label="角色"></el-table-column>
-      <el-table-column prop="address"
+      <el-table-column prop="permissionNum"
                        label="权限数"></el-table-column>
       <el-table-column label="状态"
                        align="center">
         <template slot-scope="scope">
-          <el-tag :type="scope.row.state==='成功'?'success':(scope.row.state==='失败'?'danger':'')">{{scope.row.state}}</el-tag>
+          {{scope.row.online ? '在线': '离线'}}
         </template>
       </el-table-column>
       <el-table-column label="在线时长"
                        align="center">
         <template slot-scope="scope">
-          <el-tag :type="scope.row.state==='成功'?'success':(scope.row.state==='失败'?'danger':'')">{{scope.row.state}}</el-tag>
+          {{'2021-03-05' | onlineTime}}
         </template>
       </el-table-column>
       <el-table-column label="最后登出时间"
                        align="center">
         <template slot-scope="scope">
-          <el-tag :type="scope.row.state==='成功'?'success':(scope.row.state==='失败'?'danger':'')">{{scope.row.state}}</el-tag>
+          {{scope.row.lastLogoutTime}}
         </template>
       </el-table-column>
       <el-table-column label="谷歌验证"
                        align="center">
         <template slot-scope="scope">
-          <el-tag :type="scope.row.state==='成功'?'success':(scope.row.state==='失败'?'danger':'')">{{scope.row.state}}</el-tag>
+          <el-switch v-model="scope.row.verify"
+                     @change='(event)=>{googleVerify(event,scope.row.id)}'>
+          </el-switch>
+        </template>
+      </el-table-column>
+      <el-table-column label="启/停用"
+                       align="center">
+        <template slot-scope="scope">
+          <el-switch v-model="scope.row.enabled"
+                     @change='(event)=>{userEnadles(event,scope.row.id)}'>
+          </el-switch>
         </template>
       </el-table-column>
       <el-table-column label="操作"
-                       width="180"
+                       width="250"
                        align="center">
         <template slot-scope="scope">
           <el-button type="text"
-                     icon="el-icon-edit"
-                     @click="handleEdit(scope.$index, scope.row)">详情</el-button>
+                     @click="handleDetails(scope.row)">详情</el-button>
           <el-button type="text"
-                     icon="el-icon-delete"
                      class="red"
-                     @click="handleDelete(scope.$index, scope.row)">删除账号</el-button>
+                     v-if="scope.row.username !== nowusername"
+                     @click="handleDelete(scope.$index, scope.row.id)">删除账号</el-button>
           <el-button type="text"
-                     icon="el-icon-edit"
-                     @click="handleEdit(scope.$index, scope.row)">修改密码</el-button>
+                     @click="handleEdit( scope.row.id)">修改密码</el-button>
           <el-button type="text"
-                     icon="el-icon-edit"
-                     @click="handleEdit(scope.$index, scope.row)">踢线</el-button>
+                     v-if='scope.row.online === 1'
+                     @click="handleOffline( scope.row.id)">踢线</el-button>
         </template>
       </el-table-column>
     </el-table>
     <div class="pagination">
       <el-pagination background
-                     layout="total, prev, pager, next"
-                     :current-page="query.pageIndex"
-                     :page-size="query.pageSize"
+                     :page-sizes="[20, 50, 100, 200]"
+                     layout="total, sizes, prev, pager, next, jumper"
+                     :current-page="query.current"
+                     :page-size="query.size"
                      :total="pageTotal"
+                     @size-change="handleSizeChange"
                      @current-change="handlePageChange"></el-pagination>
     </div>
 
-    <!-- 编辑弹出框 -->
-    <el-dialog title="编辑"
-               :visible.sync="editVisible"
+    <Details ref="details"></Details>
+    <el-dialog title="修改密码"
+               :show-close='false'
+               :close-on-click-modal='false'
+               :visible.sync="dialogVisible"
                width="30%">
-      <el-form ref="form"
-               :model="form"
-               label-width="70px">
-        <el-form-item label="用户名">
-          <el-input v-model="form.name"></el-input>
+      <el-form ref="userPassFroms"
+               :rules="userPassRules"
+               :model="userPassFroms"
+               label-width="100px">
+
+        <el-form-item label="新密码"
+                      prop="password">
+          <el-input v-model="userPassFroms.password"
+                    type="password"></el-input>
         </el-form-item>
-        <el-form-item label="地址">
-          <el-input v-model="form.address"></el-input>
+        <el-form-item label="确认密码"
+                      prop="newPassword">
+          <el-input v-model="userPassFroms.newPassword"
+                    type="password"></el-input>
         </el-form-item>
       </el-form>
       <span slot="footer"
             class="dialog-footer">
-        <el-button @click="editVisible = false">取 消</el-button>
+        <el-button @click="()=>{this.dialogVisible = false}">取 消</el-button>
         <el-button type="primary"
-                   @click="saveEdit">确 定</el-button>
+                   @click="updataAllSave('userPassFroms')">确 定</el-button>
       </span>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { fetchData } from '@/api/index';
+import moment from 'moment';
+import { userList, userEnabled, userOffline, goolgeVerify, userUpdatePassword, userDelete } from '@/api/index';
+import ChildHeader from './componets/childHeader.vue';
+import Details from './componets/details.vue';
 export default {
   name: 'basetable',
   data () {
+    let userPassWord = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请再次输入密码'));
+      } else if (value !== this.userPassFroms.password) {
+        callback(new Error('两次输入密码不一致!'));
+      } else {
+        callback();
+      }
+    };
     return {
       query: {
-        address: '',
-        name: '',
-        pageIndex: 1,
-        pageSize: 10
+        roleName: '',
+        nickName: '',
+        username: '',
+        current: 1,
+        size: 20
       },
+      nowusername: '',
+      userPassFroms: {},
       loading: '',
       tableData: [],
-      multipleSelection: [],
-      delList: [],
-      editVisible: false,
+      tableHeight: window.innerHeight - 380,
       pageTotal: 0,
       form: {},
-      idx: -1,
-      id: -1
+      multipleSelection: [],
+      userPassRules: {
+        password: [
+          { required: true, message: '请输入密码', trigger: 'blur' },
+          { min: 6, max: 20, message: '长度限制6-20', trigger: 'blur' }
+        ],
+        newPassword: [
+          { required: true, validator: userPassWord, trigger: "blur" }
+        ],
+      },
+      dialogVisible: false
     };
   },
   created () {
     this.getData();
+    this.nowusername = localStorage.getItem('username')
+  },
+  components: {
+    ChildHeader,
+    Details,
+  },
+  filters: {
+    onlineTime: function (value) {
+      const now = moment().format("YYYY-MM-DD HH:mm:ss")
+      return moment(now).diff(moment(value), 'days')
+    }
   },
   methods: {
-    // 获取 easy-mock 的模拟数据
-    getData () {
-      fetchData(this.query).then(res => {
-        console.log(res);
-        this.tableData = res.list;
-        this.pageTotal = res.pageTotal || 50;
-      });
+    handleSizeChange (val) {
+      this.$set(this.query, 'size', val);
+      this.getData()
     },
-    // 触发搜索按钮
-    handleSearch () {
-      this.$set(this.query, 'pageIndex', 1);
-      this.getData();
+    handleDetails (row) {
+      this.$refs.details.handlModel(row)
+    },
+    updataAllSave (formName) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          userUpdatePassword(this.userPassFroms).then((res) => {
+            this.dialogVisible = false
+            if (res.data.code === 0) {
+              this.$message({
+                message: '修改成功',
+                type: 'success'
+              });
+            } else {
+              this.$message({
+                message: res.data.msg,
+                type: 'warning'
+              });
+            }
+          })
+        } else {
+          return false;
+        }
+      });
+
+    },
+    // 搜素事件
+    selectContent (title, val, action) {
+      if (action) {
+        this.query = {
+          roleName: '',
+          nickName: '',
+          username: '',
+          current: 1,
+          size: 10
+        }
+      }
+
+      this.query[title] = val
+      this.current = 1
+      this.getData()
+
+    },
+    handleOffline (id) {
+      userOffline(id).then((res) => {
+        if (res.data.code === 0) {
+          this.getData()
+        } else {
+          this.$message({
+            message: res.data.msg,
+            type: 'warning'
+          });
+        }
+      })
+    },
+    googleVerify (val, id) {
+      goolgeVerify({ 'id': id, 'verify': val }).then((res) => {
+        if (res.data.code === 0) {
+          this.getData()
+        } else {
+          this.$message({
+            message: res.data.msg,
+            type: 'warning'
+          });
+        }
+      })
+    },
+    userEnadles (val, id) {
+
+      userEnabled({ 'id': id, 'enabled': val }).then((res) => {
+        if (res.data.code === 0) {
+          this.getData()
+        } else {
+          this.$message({
+            message: res.data.msg,
+            type: 'warning'
+          });
+        }
+      })
+    },
+    closeSelect () {
+      this.$refs.multipleTable.clearSelection();
+    },
+    // 获取列表
+    getData () {
+      this.loading = true
+      userList(this.query).then(res => {
+        this.tableData = res.data.body.records;
+        this.pageTotal = res.data.body.total || 0
+        this.loading = false
+      })
+        .catch(error => {
+          this.loading = false
+        })
+    },
+    handleSelectionChange (val) {
+      this.multipleSelection = val
     },
     // 删除操作
     handleDelete (index, row) {
@@ -173,36 +296,33 @@ export default {
         type: 'warning'
       })
         .then(() => {
-          this.$message.success('删除成功');
-          this.tableData.splice(index, 1);
+          userDelete(row).then((res) => {
+            if (res.data.code === 0) {
+              this.$message({
+                message: '删除成功',
+                type: 'success'
+              });
+              this.getData()
+            } else {
+              this.$message({
+                message: res.data.msg,
+                type: 'warning'
+              });
+            }
+          })
         })
         .catch(() => { });
     },
-    // 多选操作
-    handleSelectionChange (val) {
-      this.multipleSelection = val;
-    },
-    delAllSelection () {
-      const length = this.multipleSelection.length;
-      let str = '';
-      this.delList = this.delList.concat(this.multipleSelection);
-      for (let i = 0; i < length; i++) {
-        str += this.multipleSelection[i].name + ' ';
-      }
-      this.$message.error(`删除了${str}`);
-      this.multipleSelection = [];
-    },
+
     // 编辑操作
-    handleEdit (index, row) {
-      this.idx = index;
-      this.form = row;
-      this.editVisible = true;
-    },
-    // 保存编辑
-    saveEdit () {
-      this.editVisible = false;
-      this.$message.success(`修改第 ${this.idx + 1} 行成功`);
-      this.$set(this.tableData, this.idx, this.form);
+    handleEdit (id) {
+      this.userPassFroms = {
+        'id': id
+      }
+      this.dialogVisible = true
+      this.$nextTick(() => {
+        this.$refs['userPassFroms'].clearValidate();
+      })
     },
     // 分页导航
     handlePageChange (val) {
@@ -214,18 +334,6 @@ export default {
 </script>
 
 <style scoped>
-.handle-box {
-    margin-bottom: 20px;
-}
-
-.handle-select {
-    width: 120px;
-}
-
-.handle-input {
-    width: 300px;
-    display: inline-block;
-}
 .table {
     width: 100%;
     font-size: 14px;

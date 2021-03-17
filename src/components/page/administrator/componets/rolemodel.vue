@@ -1,7 +1,9 @@
 <template>
   <el-dialog :title="modelTitle"
+             :show-close='false'
+             :close-on-click-modal='false'
              :visible.sync="dialogVisible"
-             width="58%">
+             width="800px">
     <el-row>
       <el-form ref="formRules"
                :rules="rules"
@@ -42,6 +44,7 @@
                 :columns="columns"
                 @getAuth="getAuth"
                 ref="treeTableS"
+                class="treeTable"
                 border></tree-table>
     <span slot="footer"
           class="dialog-footer">
@@ -314,6 +317,10 @@ export default {
 </script>
 
 <style>
+.treeTable {
+    max-height: 500px;
+    overflow-y: scroll;
+}
 .grid-content {
     display: flex;
     align-items: center;

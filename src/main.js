@@ -11,8 +11,9 @@ import './components/common/directives';
 import 'babel-polyfill';
 import store from './utils/store/index'
 import echarts from 'echarts'
+import preventClick from './utils/clickStatefrom'
 
-
+Vue.use(preventClick)
 Vue.config.productionTip = false;
 Vue.use(VueI18n);
 Vue.use(ElementUI, {

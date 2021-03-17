@@ -2,7 +2,10 @@ import Vue from 'vue';
 import Router from 'vue-router';
 
 Vue.use(Router);
-
+const originalPush = Router.prototype.push
+Router.prototype.push = function push (location) {
+  return originalPush.call(this, location).catch(err => err)
+}
 export default new Router({
   routes: [
     {
@@ -30,9 +33,39 @@ export default new Router({
           meta: { title: '视频分类' }
         },
         {
+          path: '/television',
+          component: () => import(/* webpackChunkName: "topvideos" */ '@/components/page/resources/television'),
+          meta: { title: '电视管理' }
+        },
+        {
           path: '/community',
-          component: () => import(/* webpackChunkName: "community" */ '@/components/page/operating/community'),
-          meta: { title: '社区标签' }
+          component: () => import(/* webpackChunkName: "topvideos" */ '@/components/page/resources/community/index'),
+          meta: { title: '社区管理' }
+        },
+        {
+          path: '/movie',
+          component: () => import(/* webpackChunkName: "topvideos" */ '@/components/page/resources/movie'),
+          meta: { title: '视频管理' }
+        },
+        {
+          path: '/vedio',
+          component: () => import(/* webpackChunkName: "topvideos" */ '@/components/page/report/vedio'),
+          meta: { title: '视频表报' }
+        },
+        {
+          path: '/reportoperating',
+          component: () => import(/* webpackChunkName: "topvideos" */ '@/components/page/report/operating'),
+          meta: { title: '运维报表' }
+        },
+        {
+          path: '/shortVideo',
+          component: () => import(/* webpackChunkName: "topvideos" */ '@/components/page/resources/shortVideo/index'),
+          meta: { title: '短视频管理' }
+        },
+        {
+          path: '/communitylabel',
+          component: () => import(/* webpackChunkName: "community" */ '@/components/page/operating/communitylabel'),
+          meta: { title: '社区标签管理' }
         },
         {
           path: '/start',
@@ -45,90 +78,34 @@ export default new Router({
           meta: { title: '公告管理' }
         },
         {
+          path: '/channel',
+          component: () => import(/* webpackChunkName: "community" */ '@/components/page/operating/channel'),
+          meta: { title: '渠道管理' }
+        },
+        {
           path: '/administrator',
-          redirect: '/child',
-          component: () => import(/* webpackChunkName: "community" */ '@/components/page/administrator'),
+          component: () => import(/* webpackChunkName: "community" */ '@/components/page/administrator/index.vue'),
           meta: { title: '管理员账号' },
-          children: [
-            {
-              path: '/child',
-              component: () => import(/* webpackChunkName: "community" */ '@/components/page/administrator/child'),
-              meta: { title: '子账号设置' }
-            },
-            {
-              path: '/role',
-              component: () => import(/* webpackChunkName: "community" */ '@/components/page/administrator/role'),
-              meta: { title: '角色管理' }
-            }
-          ]
         },
         {
-          path: '/icon',
-          component: () => import(/* webpackChunkName: "icon" */ '../components/page/Icon.vue'),
-          meta: { title: '自定义图标' }
+          path: '/journal',
+          component: () => import(/* webpackChunkName: "community" */ '@/components/page/journal/index.vue'),
+          meta: { title: '后台操作日志' },
         },
         {
-          path: '/table',
-          component: () => import(/* webpackChunkName: "table" */ '../components/page/BaseTable.vue'),
-          meta: { title: '基础表格' }
+          path: '/usermanagement',
+          component: () => import(/* webpackChunkName: "community" */ '@/components/page/user/management.vue'),
+          meta: { title: '会员管理' },
         },
         {
-          path: '/tabs',
-          component: () => import(/* webpackChunkName: "tabs" */ '../components/page/Tabs.vue'),
-          meta: { title: 'tab选项卡' }
+          path: '/merchants',
+          component: () => import(/* webpackChunkName: "community" */ '@/components/page/financial/merchants.vue'),
+          meta: { title: '商户管理' },
         },
         {
-          path: '/form',
-          component: () => import(/* webpackChunkName: "form" */ '../components/page/BaseForm.vue'),
-          meta: { title: '基本表单' }
-        },
-        {
-          // 富文本编辑器组件
-          path: '/editor',
-          component: () => import(/* webpackChunkName: "editor" */ '../components/page/VueEditor.vue'),
-          meta: { title: '富文本编辑器' }
-        },
-        {
-          // markdown组件
-          path: '/markdown',
-          component: () => import(/* webpackChunkName: "markdown" */ '../components/page/Markdown.vue'),
-          meta: { title: 'markdown编辑器' }
-        },
-        {
-          // 图片上传组件
-          path: '/upload',
-          component: () => import(/* webpackChunkName: "upload" */ '../components/page/Upload.vue'),
-          meta: { title: '文件上传' }
-        },
-        {
-          // vue-schart组件
-          path: '/charts',
-          component: () => import(/* webpackChunkName: "chart" */ '../components/page/BaseCharts.vue'),
-          meta: { title: 'schart图表' }
-        },
-        {
-          // 拖拽列表组件
-          path: '/drag',
-          component: () => import(/* webpackChunkName: "drag" */ '../components/page/DragList.vue'),
-          meta: { title: '拖拽列表' }
-        },
-        {
-          // 拖拽Dialog组件
-          path: '/dialog',
-          component: () => import(/* webpackChunkName: "dragdialog" */ '../components/page/DragDialog.vue'),
-          meta: { title: '拖拽弹框' }
-        },
-        {
-          // 国际化组件
-          path: '/i18n',
-          component: () => import(/* webpackChunkName: "i18n" */ '../components/page/I18n.vue'),
-          meta: { title: '国际化' }
-        },
-        {
-          // 权限页面
-          path: '/permission',
-          component: () => import(/* webpackChunkName: "permission" */ '../components/page/Permission.vue'),
-          meta: { title: '权限测试', permission: true }
+          path: '/signin',
+          component: () => import(/* webpackChunkName: "community" */ '@/components/page/activity/signin.vue'),
+          meta: { title: '签到活动' },
         },
         {
           path: '/404',
@@ -139,15 +116,9 @@ export default new Router({
           path: '/403',
           component: () => import(/* webpackChunkName: "403" */ '../components/page/403.vue'),
           meta: { title: '403' }
-        },
-        {
-          path: '/donate',
-          component: () => import(/* webpackChunkName: "donate" */ '../components/page/Donate.vue'),
-          meta: { title: '支持作者' }
         }
       ]
     },
-
     {
       path: '*',
       redirect: '/404'

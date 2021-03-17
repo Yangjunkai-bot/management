@@ -3,15 +3,45 @@
     <div class="crumbs">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item>
-          <i class="el-icon-lx-cascades"></i> 启动广告
+          <i class="el-icon-lx-cascades"></i> 商户管理
         </el-breadcrumb-item>
       </el-breadcrumb>
     </div>
     <div class="container">
       <div class="handle-box">
+        <el-select v-model="selectTitle"
+                   class="handle-select mr10">
+          <el-option key="1"
+                     label="商户号"
+                     value="merchNo"></el-option>
+          <el-option key="2"
+                     label="商户名称"
+                     value="merchName"></el-option>
+        </el-select>
+        <el-input v-model="selectContent"
+                  placeholder="搜索内容"
+                  class="handle-input mr10"></el-input>
+        <el-select v-model="query.status"
+                   class="handle-select mr10">
+          <el-option key="0"
+                     label="启用"
+                     value="username"></el-option>
+          <el-option key="1"
+                     label="停用"
+                     value="ip"></el-option>
+        </el-select>
         <el-button type="primary"
+                   icon="el-icon-search"
+                   v-preventClick
+                   @click="handleSearch">搜索</el-button>
+        <el-button type="danger"
+                   v-preventClick
+                   @click="remove">重制</el-button>
+
+        <el-button type="primary"
+                   style="float:right"
                    @click="handleEdit('add')"
-                   class="mr10">新增广告</el-button>
+                   class="mr10">新增商户</el-button>
       </div>
       <el-table :data="tableData"
                 :height="tableHeight"
@@ -24,48 +54,31 @@
                          label="排序"
                          width="50">
         </el-table-column>
-        <el-table-column prop="title"
+        <el-table-column prop="merchName"
                          show-overflow-tooltip
-                         label="广告名称"
+                         label="商户名称"
                          align='center'></el-table-column>
-        <el-table-column label="广告说明"
+        <el-table-column label="商户号"
                          show-overflow-tooltip
                          align='center'
-                         prop='description'>
+                         prop='merchNo'>
         </el-table-column>
-        <el-table-column label="宣传图"
-                         width="110px"
-                         align='center'>
-          <template slot-scope="scope">
-            <el-image style="width: 100px; height: 100px"
-                      :src="scope.row.image"
-                      :preview-src-list="[scope.row.image]">
-            </el-image>
-          </template>
-        </el-table-column>
-        <el-table-column align='center'
-                         label="广告时间">
-          <template slot-scope="scope">
-            {{scope.row.adTime}}s
-          </template>
-        </el-table-column>
-        <el-table-column align='center'
+        <el-table-column label="累计充值金额"
                          show-overflow-tooltip
-                         label="创建时间">
-          <template slot-scope="scope">
-            {{scope.row.createTime | formatDate}}
-          </template>
+                         align='center'
+                         prop='totalCharge'>
         </el-table-column>
-        <el-table-column label="有效时间"
-                         align='center'>
-          <template slot-scope="scope">
-            {{scope.row.validTime}}s
-          </template>
+        <el-table-column label="最后操作人"
+                         show-overflow-tooltip
+                         align='center'
+                         prop='operator'>
         </el-table-column>
-        <el-table-column label="最后编辑人"
-                         align='center'>
+        <el-table-column label="最后操作时间"
+                         show-overflow-tooltip
+                         align='center'
+                         prop='updateTime'>
           <template slot-scope="scope">
-            {{scope.row.updateBy ? scope.row.updateBy : '-'}}
+            {{scope.row.updateTime | formatDate}}
           </template>
         </el-table-column>
         <el-table-column label="开关"
@@ -90,10 +103,12 @@
       </el-table>
       <div class="pagination">
         <el-pagination background
-                       layout="total, prev, pager, next"
-                       :current-page="query.page"
-                       :page-size="query.pageSize"
+                       :page-sizes="[20, 50, 100, 200]"
+                       layout="total, sizes, prev, pager, next, jumper"
+                       :current-page="query.current"
+                       :page-size="query.size"
                        :total="pageTotal"
+                       @size-change="handleSizeChange"
                        @current-change="handlePageChange"></el-pagination>
       </div>
     </div>
@@ -108,52 +123,53 @@
                :rules="rules"
                :model="form"
                label-width="90px">
-        <el-form-item label="广告名称"
-                      prop="title">
-          <el-input v-model="form.title"></el-input>
-        </el-form-item>
+
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="广告时间"
-                          prop="adTime">
-              <el-input-number v-model="form.adTime"
-                               controls-position="right"
-                               class="modelIpntWidth"
-                               :min="1"
-                               :max="10"></el-input-number>
+            <el-form-item label="商户名称"
+                          prop="merchName">
+              <el-input v-model="form.merchName"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="有效时间"
-                          prop="validTime">
-              <el-input-number v-model="form.validTime"
-                               controls-position="right"
-                               class="modelIpntWidth"
-                               :min="1"
-                               :max="5"></el-input-number>
+            <el-form-item label="商户code"
+                          prop="merchCode">
+              <el-input v-model="form.merchCode"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label=""
-                      prop="fileList">
-          <el-upload class="upload-demo"
-                     :file-list="form.fileList"
-                     ref='clearUpload'
-                     drag
-                     action="/"
-                     :limit='1'
-                     :http-request="uploadFile"
-                     :on-exceed="handleExceed">
-            <i class="el-icon-upload"></i>
-            <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-            <div class="el-upload__tip"
-                 slot="tip">只能上传jpg/png文件，且不超过500kb</div>
-          </el-upload>
-        </el-form-item>
-        <el-form-item label="广告说明"
-                      prop="description">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="商户号"
+                          prop="merchNo">
+              <el-input v-model="form.merchNo"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="商户密钥"
+                          prop="md5Key">
+              <el-input v-model="form.md5Key"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="商户私钥"
+                          prop="privateKey">
+              <el-input v-model="form.privateKey"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="商户公钥"
+                          prop="publicKey">
+              <el-input v-model="form.publicKey"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="备注"
+                      prop="remark">
           <el-input type="textarea"
-                    v-model="form.description"></el-input>
+                    v-model="form.remark"></el-input>
         </el-form-item>
       </el-form>
       <span slot="footer"
@@ -168,7 +184,7 @@
 
 <script>
 import moment from 'moment'
-import { getAdPage, addAd, updateAd, uploadPic } from '@/api/index';
+import { settingList, settingSave, settingUpdate, settingDelete } from '@/api/index';
 export default {
   name: 'basetable',
 
@@ -182,37 +198,36 @@ export default {
     }
     return {
       query: {
-        size: 10,
+        size: 20,
         current: 1,
-        type: 1
       },
       operationTitle: '',
       tableData: [],
+      selectTitle: 'merchNo',
+      selectContent: '',
       editVisible: false,
       tableHeight: window.innerHeight - 310,
       pageTotal: 0,
       form: {},
       rules: {
-        title: [
-          { required: true, message: '请输入广告标题', trigger: 'blur' },
-          { max: 20, message: '最大输入20个字符', trigger: 'blur' }
+        merchName: [
+          { required: true, message: '请输入商户名称', trigger: 'blur' },
         ],
-        description: [
-          { required: true, message: '请输入广告说明', trigger: 'blur' },
-          { max: 20, message: '最大输入20个字符', trigger: 'blur' }
+        merchCode: [
+          { required: true, message: '请输入商户code', trigger: 'blur' },
         ],
-        adTime: [
-          { required: true, message: '请输入广告时间', trigger: 'blur' },
+        merchNo: [
+          { required: true, message: '请输入商户号', trigger: 'blur' },
         ],
-        validTime: [
-          { required: true, message: '请输入广告有效时间', trigger: 'blur' },
-          { validator: settlementPeriodRule, trigger: 'blur' }
+        md5Key: [
+          { required: true, message: '请输入商户密钥', trigger: 'blur' },
         ],
-        fileList: [{
-          message: '请上传',
-          trigger: 'change',
-          required: true
-        }]
+        privateKey: [
+          { required: true, message: '请输入商户私钥', trigger: 'blur' },
+        ],
+        publicKey: [
+          { required: true, message: '请输入商户公钥', trigger: 'blur' },
+        ],
       },
     };
   },
@@ -226,13 +241,13 @@ export default {
   },
   methods: {
     getData () {
-      getAdPage(this.query).then(res => {
-        this.tableData = res.data.body.list;
+      settingList(this.query).then(res => {
+        this.tableData = res.data.body.records;
         this.tableData.forEach(element => {
-          element.createTime = element.createTime * 1000
+          element.updateTime = element.updateTime * 1000
           element.status = element.status === 0 ? true : false
         });
-        this.pageTotal = res.data.body.totalCount
+        this.pageTotal = res.data.body.total
       });
     },
     handleSwitch (value, row) {
@@ -244,21 +259,20 @@ export default {
       const NewRow = JSON.parse(JSON.stringify(row))
       NewRow.status = status
       NewRow.createTime = NewRow.createTime / 1000;
-      // let mess = ''
-      // if (status === 0) {
-      //   mess = '已启动'
-      // } else if (status === 1) {
-      //   mess = '已禁用'
-      // } else {
-      //   mess = '删除成功'
-      // }
+      let mess = ''
+      if (status === 0) {
+        mess = '已启动'
+      } else if (status === 1) {
+        mess = '已禁用'
+      } else {
+        mess = '删除成功'
+      }
       updateAd(NewRow).then((res) => {
         if (res.data.code === 0) {
-          if (status !== 0 && status !== 1)
-            this.$message({
-              message: '删除成功',
-              type: 'success'
-            });
+          this.$message({
+            message: mess,
+            type: 'success'
+          });
           this.getData()
         } else {
           this.$message({
@@ -274,8 +288,26 @@ export default {
     },
     // 触发搜索按钮
     handleSearch () {
-      this.$set(this.query, 'pageIndex', 1);
+      if (this.selectContent !== '') {
+        this.query[this.selectTitle] = this.selectContent
+      } else {
+        delete this.query[this.selectTitle]
+      }
+      this.$set(this.query, 'current', 1);
       this.getData();
+    },
+    remove () {
+      this.query = {
+        current: 1,
+        size: 20
+      },
+        this.selectContent = ''
+      this.selectData = []
+      this.getData()
+    },
+    handleSizeChange (val) {
+      this.$set(this.query, 'size', val);
+      this.getData()
     },
     // 删除操作
     handleDelete (index, row) {
@@ -284,7 +316,20 @@ export default {
         type: 'warning'
       })
         .then(() => {
-          this.storeStart(2, row)
+          settingDelete(row.id).then((res) => {
+            if (res.data.code === 0) {
+              // this.$message({
+              //   message: '删除成功',
+              //   type: 'success'
+              // });
+              this.getData()
+            } else {
+              this.$message({
+                message: res.data.msg,
+                type: 'warning'
+              });
+            }
+          })
         })
         .catch(() => { });
     },
@@ -310,37 +355,11 @@ export default {
       }
 
     },
-    uploadFile (param) {
-
-      var form = new FormData();
-      form.append("file", param.file);
-      form.append("type", 1);
-      uploadPic(form).then((res) => {
-        if (res.data.code === 0) {
-          this.form.fileList = []
-          this.form.image = res.data.body
-          this.form.fileList = [{ name: param.file.name, url: this.form.noticeImg }]
-        } else {
-          this.$message({
-            message: res.data.msg,
-            type: 'warning'
-          });
-        }
-      })
-
-    },
-    handleExceed (files, fileList) {
-      this.$message.warning(`当前限制选择 1 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`);
-    },
     saveEdit () {
       this.$refs.formRules.validate((valid) => {
         if (valid) {
           this.editVisible = false;
-          delete this.form.fileList
-          this.form.type = 1;
-          this.form.createTime ? this.form.createTime = this.form.createTime / 1000 : null;
-          this.form.status ? this.form.status = 1 : this.form.status = 0;
-          (this.operationTitle === '新增广告' ? addAd : updateAd)(this.form).then((res) => {
+          (this.operationTitle === '新增广告' ? settingSave : settingUpdate)(this.form).then((res) => {
             if (res.data.code === 0) {
               this.$message({
                 message: this.operationTitle === '新增广告' ? '新增成功' : '编辑成功',
@@ -369,7 +388,6 @@ export default {
     width: 100%;
 }
 .handle-box {
-    text-align: right;
     margin-bottom: 10px;
 }
 

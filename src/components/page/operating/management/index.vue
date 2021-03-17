@@ -14,6 +14,7 @@
                    class="mr10">新增公告</el-button>
       </div>
       <el-table :data="tableData"
+                :height="tableHeight"
                 stripe
                 v-loading="loading"
                 class="table"
@@ -31,27 +32,33 @@
         <el-table-column label="公告类型"
                          align='center'>
           <template slot-scope="scope">
-            {{options[scope.row.type].label}}
+            {{scope.row.type ? options[scope.row.type -1].labels : '-'}}
           </template>
         </el-table-column>
-        <el-table-column prop="content"
-                         align='center'
+        <el-table-column align='center'
                          show-overflow-tooltip
                          label="公告内容">
+          <template slot-scope="scope">
+            <span v-html="scope.row.content"></span>
+          </template>
         </el-table-column>
         <el-table-column label="公告照片"
+                         width="110px"
                          align='center'>
           <template slot-scope="scope">
-            <el-image style="width: 100px; height: 100px"
+
+            <el-image v-show="scope.row.noticeImg"
+                      style="width: 100px; height: 100px"
                       :src="scope.row.noticeImg"
                       :preview-src-list="[scope.row.noticeImg]">
             </el-image>
+            <span v-show="!scope.row.noticeImg"> -</span>
           </template>
         </el-table-column>
         <el-table-column align='center'
                          label="接收人">
           <template slot-scope="scope">
-            {{scope.row.accepter ?scope.rpw.accepter : '-' }}
+            {{scope.row.accepter ?scope.row.accepter : '-' }}
           </template>
         </el-table-column>
         <el-table-column label="开始时间"
@@ -107,38 +114,53 @@
 
     <!-- 编辑弹出框 -->
     <el-dialog :title="operationTitle"
+               :show-close='false'
+               :close-on-click-modal='false'
                :visible.sync="editVisible"
-               width="40%">
+               width="800px">
       <el-form ref="formRules"
                :rules="rules"
                :model="form"
                label-width="90px">
-        <el-form-item label="公告标题"
-                      prop="title">
-          <el-input v-model="form.title"></el-input>
-        </el-form-item>
-        <el-form-item label="公告类型"
-                      prop="type">
-          <el-select class="modelIpntWidth"
-                     v-model="form.type"
-                     placeholder="请选择公告类型">
-            <el-option v-for="item in options"
-                       :key="item.value"
-                       :label="item.label"
-                       :value="item.value">
-            </el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="开始时间"
-                      prop="startTime">
-          <el-date-picker v-model="form.startTime"
-                          class="modelIpntWidth"
-                          type="datetime"
-                          placeholder="选择日期"
-                          value-format="timestamp">
-          </el-date-picker>
-        </el-form-item>
-        <el-form-item label="结束时间"
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="公告标题"
+                          prop="title">
+              <el-input v-model="form.title"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="公告类型"
+                          prop="type">
+              <el-select class="modelIpntWidth"
+                         v-model="form.type"
+                         placeholder="请选择公告类型">
+                <el-option v-for="item in options"
+                           :key="item.value"
+                           :label="item.labels"
+                           :value="item.value">
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="开始时间"
+                          prop="selectTimes">
+              <el-date-picker v-model="selectTimes"
+                              @change='handelData'
+                              class="modelIpntWidth"
+                              type="datetimerange"
+                              range-separator="至"
+                              start-placeholder="开始日期"
+                              value-format="timestamp"
+                              :default-time="['23:59:59', '23:59:59']"
+                              end-placeholder="结束日期">
+              </el-date-picker>
+            </el-form-item>
+          </el-col>
+          <!-- <el-form-item label="结束时间"
                       prop="endTime">
           <el-date-picker v-model="form.endTime"
                           :picker-options="pickerOptionsEnd"
@@ -147,9 +169,21 @@
                           placeholder="选择日期"
                           value-format="timestamp">
           </el-date-picker>
-        </el-form-item>
-        <el-form-item prop="fileList">
-          <el-upload class="upload-demo"
+        </el-form-item> -->
+          <el-col :span="12">
+            <el-form-item v-if="form.type == 1"
+                          prop="fileList"
+                          label="图片上传">
+              <el-upload :file-list="form.fileList"
+                         ref='clearUpload'
+                         action="/"
+                         :limit='1'
+                         :http-request="uploadFile"
+                         :on-exceed="handleExceed">
+                <el-button size="small"
+                           type="primary">点击上传</el-button>
+              </el-upload>
+              <!-- <el-upload class="upload-demo"
                      drag
                      :file-list="form.fileList"
                      ref='clearUpload'
@@ -161,13 +195,16 @@
             <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
             <div class="el-upload__tip"
                  slot="tip">只能上传jpg/png文件，且不超过500kb</div>
-          </el-upload>
-        </el-form-item>
+          </el-upload> -->
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-form-item label="公告内容"
                       prop="content">
-          <el-input type="textarea"
-                    v-model="form.content"></el-input>
+          <QuillEdito ref="quilledito"
+                      @updataFormContent='updataFormContent' />
         </el-form-item>
+
       </el-form>
       <span slot="footer"
             class="dialog-footer">
@@ -180,6 +217,7 @@
 </template>
 
 <script>
+import QuillEdito from './quillEdutor'
 import moment from 'moment'
 import { noticePage, addNotice, uploadPic, updateNotice } from '@/api/index';
 export default {
@@ -195,8 +233,9 @@ export default {
       editVisible: false,
       pageTotal: 0,
       form: {
-        fileList: [],
       },
+      selectTimes: [],
+      tableHeight: window.innerHeight - 310,
       rules: {
         title: [
           { required: true, message: '请输入公告标题', trigger: 'blur' },
@@ -205,15 +244,10 @@ export default {
         type: [
           { required: true, message: '请选择公告类型', trigger: 'change' }
         ],
-        startTime: [{
+        selectTimes: [{
+          type: 'date',
           required: true,
-          message: '请选择开始时间',
-          trigger: 'change'
-        }],
-        endTime: [{
-          required: true,
-          message: '请选择结束时间',
-          validator: this.pickerOptionsEnd,
+          message: '请选择时间',
           trigger: 'change'
         }],
         fileList: [{
@@ -242,12 +276,15 @@ export default {
       ],
       options: [{
         value: 1,
-        label: '弹窗公告'
+        labels: '弹窗公告'
       }, {
         value: 2,
-        label: '消息公告'
+        labels: '消息公告'
       }],
     };
+  },
+  components: {
+    QuillEdito
   },
   created () {
     this.getData();
@@ -258,6 +295,10 @@ export default {
     }
   },
   methods: {
+    handelData (val) {
+      this.form.startTime = val[0] / 1000
+      this.form.endTime = val[1] / 1000
+    },
     // 获取 easy-mock 的模拟数据
     getData () {
       this.loading = true
@@ -309,8 +350,6 @@ export default {
     storeStart (status, row, mes) {
       const NewRow = JSON.parse(JSON.stringify(row))
       NewRow.status = status
-      NewRow.startTime = NewRow.startTime / 1000;
-      NewRow.endTime = NewRow.endTime / 1000;
       updateNotice(NewRow).then((res) => {
         if (res.data.code === 0) {
           this.$message({
@@ -326,23 +365,34 @@ export default {
         }
       })
     },
+    updataFormContent (val) {
+      this.form.content = val.html
+    },
     // 编辑操作
     handleEdit (operation, index, row) {
       if (operation === 'add') {
         this.operationTitle = '新增公告'
-        this.form = {}
+        this.form = {
+          fileList: [],
+          type: 1
+        }
+        this.selectTimes = []
+
         this.editVisible = true;
         this.$nextTick(() => {
           this.$refs.formRules.clearValidate();
           this.$refs.clearUpload.clearFiles()
+          this.$refs.quilledito.remove()
         })
       } else {
         this.operationTitle = '编辑公告'
         this.form = JSON.parse(JSON.stringify(row));
         this.form.fileList = [{ name: '预选图片', url: this.form.noticeImg }]
+        this.selectTimes = [this.form.startTime, this.form.endTime]
         this.editVisible = true;
         this.$nextTick(() => {
           this.$refs.formRules.clearValidate();
+          this.$refs.quilledito.newVal(this.form.content)
           // this.$refs.clearUpload.clearFiles()
         })
       }
@@ -396,7 +446,9 @@ export default {
 .handle-select {
     width: 120px;
 }
-
+.ql-editor {
+    height: 400px;
+}
 .handle-input {
     width: 300px;
     display: inline-block;
@@ -410,11 +462,5 @@ export default {
 }
 .mr10 {
     margin-right: 10px;
-}
-.table-td-thumb {
-    display: block;
-    margin: auto;
-    width: 40px;
-    height: 40px;
 }
 </style>
