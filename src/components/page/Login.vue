@@ -27,7 +27,6 @@
           <el-button type="info"
                      @click="submitForm()">登录</el-button>
         </div>
-        <p class="login-tips">Tips : 用户名和密码随便填。</p>
       </el-form>
     </div>
   </div>
@@ -53,17 +52,22 @@ export default {
       this.$refs.login.validate(valid => {
         if (valid) {
           Login(this.param).then((res) => {
-            localStorage.setItem('token', res.data.body);
-            this.$message.success('登录成功');
-            this.$router.push('/dashboard');
-            console.log(res)
+            if (res.data.code === 0) {
+              localStorage.setItem('username', this.param.username);
+              localStorage.setItem('token', res.data.body);
+              this.$message.success('登录成功');
+              this.$router.push('/dashboard');
+              this.$store.dispatch('GetMenuList')
+            } else {
+              this.$message.error(res.data.msg);
+            }
+
           }).catch(err => {
 
           })
 
         } else {
           this.$message.error('请输入账号和密码');
-          console.log('error submit!!');
           return false;
         }
       });

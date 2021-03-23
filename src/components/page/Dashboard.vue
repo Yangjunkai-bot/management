@@ -35,6 +35,7 @@
 <script>
 
 import Schart from 'vue-schart';
+import { getUserOperationData } from '@/api/index';
 // import bus from '../common/bus';
 export default {
   name: 'dashboard',
@@ -62,6 +63,13 @@ export default {
   //     bus.$off('collapse', this.handleBus);
   // },
   methods: {
+    getData () {
+      getUserOperationData(this.query).then(res => {
+        this.tableData = res.data.body.configList;
+        this.state = res.data.body.status
+        this.pageTotal = res.data.body.totalCount;
+      });
+    },
     drawLine () {
       // 基于准备好的dom，初始化echarts实例
       let myChart = this.$echarts.init(document.getElementById('myChart'))

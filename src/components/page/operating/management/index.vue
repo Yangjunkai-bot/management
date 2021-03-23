@@ -3,17 +3,19 @@
     <div class="crumbs">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item>
-          <i class="el-icon-lx-cascades"></i> 视频分类
+          <i class="el-icon-lx-cascades"></i> 公告管理
         </el-breadcrumb-item>
       </el-breadcrumb>
     </div>
     <div class="container">
       <div class="handle-box">
         <el-button type="primary"
+                   v-allow="{name: 'operation:notice:add'}"
                    @click="handleEdit('add')"
-                   class="mr10">新增视频分类</el-button>
+                   class="mr10">新增公告</el-button>
       </div>
       <el-table :data="tableData"
+                :height="tableHeight"
                 stripe
                 v-loading="loading"
                 class="table"
@@ -21,40 +23,62 @@
                 header-cell-class-name="table-header">
         <el-table-column type="index"
                          label="排序"
+                         align='center'
                          width="50">
         </el-table-column>
         <el-table-column prop="title"
+                         align='center'
+                         show-overflow-tooltip
                          label="公告标题"></el-table-column>
-        <el-table-column label="公告类型">
+        <el-table-column label="公告类型"
+                         align='center'>
           <template slot-scope="scope">
-            {{options[scope.row.type].label}}
+            {{scope.row.type ? options[scope.row.type -1].labels : '-'}}
           </template>
         </el-table-column>
-        <el-table-column prop="content"
+        <el-table-column align='center'
+                         show-overflow-tooltip
                          label="公告内容">
-        </el-table-column>
-        <el-table-column label="公告照片">
           <template slot-scope="scope">
-            <el-image style="width: 100px; height: 100px"
+            <span v-html="scope.row.content"></span>
+          </template>
+        </el-table-column>
+        <el-table-column label="公告照片"
+                         width="110px"
+                         align='center'>
+          <template slot-scope="scope">
+
+            <el-image v-show="scope.row.noticeImg"
+                      style="width: 100px; height: 100px"
                       :src="scope.row.noticeImg"
                       :preview-src-list="[scope.row.noticeImg]">
             </el-image>
+            <span v-show="!scope.row.noticeImg"> -</span>
           </template>
         </el-table-column>
-        <el-table-column prop="accepter"
-                         label="接收人"></el-table-column>
-        <el-table-column label="开始时间">
+        <el-table-column align='center'
+                         label="接收人">
+          <template slot-scope="scope">
+            {{scope.row.accepter ?scope.row.accepter : '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="开始时间"
+                         show-overflow-tooltip
+                         align='center'>
           <template slot-scope="scope">
             {{scope.row.startTime | formatDate}}
           </template>
         </el-table-column>
-        <el-table-column label="结束时间">
+        <el-table-column label="结束时间"
+                         show-overflow-tooltip
+                         align='center'>
           <template slot-scope="scope">
             {{scope.row.endTime | formatDate}}
           </template>
         </el-table-column>
         <el-table-column prop="createBy"
-                         label="最后编辑人"></el-table-column>
+                         label="最后编辑人"
+                         align='center'></el-table-column>
         <el-table-column label="状态">
           <template slot-scope="scope">
             {{status[scope.row.status].label}}
@@ -65,16 +89,20 @@
                          align="center">
           <template slot-scope="scope">
             <el-button type="text"
+                       v-allow="{name: 'operation:notice:publish'}"
                        v-if="scope.row.status === 1"
                        @click="storeStart(0, scope.row,'已发布')">发布</el-button>
             <el-button type="text"
+                       v-allow="{name: 'operation:notice:stop'}"
                        v-if="scope.row.status == 0"
                        class="red"
                        @click="storeStart(3, scope.row,'已停用')">停用</el-button>
             <el-button type="text"
+                       v-allow="{name: 'operation:notice:update'}"
                        @click="handleEdit('edit',scope.$index, scope.row)">编辑</el-button>
             <el-button type="text"
                        class="red"
+                       v-allow="{name: 'operation:notice:delete'}"
                        @click="handleDelete(scope.$index, scope.row)">删除</el-button>
           </template>
         </el-table-column>
@@ -91,48 +119,76 @@
 
     <!-- 编辑弹出框 -->
     <el-dialog :title="operationTitle"
+               :show-close='false'
+               :close-on-click-modal='false'
                :visible.sync="editVisible"
-               width="40%">
+               width="800px">
       <el-form ref="formRules"
                :rules="rules"
                :model="form"
                label-width="90px">
-        <el-form-item label="公告标题"
-                      prop="title">
-          <el-input v-model="form.title"></el-input>
-        </el-form-item>
-        <el-form-item label="公告类型"
-                      prop="type">
-          <el-select class="modelIpntWidth"
-                     v-model="form.type"
-                     placeholder="请选择公告类型">
-            <el-option v-for="item in options"
-                       :key="item.value"
-                       :label="item.label"
-                       :value="item.value">
-            </el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="开始时间"
-                      prop="startTime">
-          <el-date-picker v-model="form.startTime"
-                          class="modelIpntWidth"
-                          type="datetime"
-                          placeholder="选择日期"
-                          value-format="timestamp">
-          </el-date-picker>
-        </el-form-item>
-        <el-form-item label="结束时间"
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="公告标题"
+                          prop="title">
+              <el-input v-model="form.title"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="公告类型"
+                          prop="type">
+              <el-select class="modelIpntWidth"
+                         v-model="form.type"
+                         placeholder="请选择公告类型">
+                <el-option v-for="item in options"
+                           :key="item.value"
+                           :label="item.labels"
+                           :value="item.value">
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="开始时间"
+                          prop="selectTimes">
+              <el-date-picker v-model="form.selectTimes"
+                              @change='handelData'
+                              class="modelIpntWidth"
+                              type="datetimerange"
+                              range-separator="至"
+                              start-placeholder="开始日期"
+                              value-format="timestamp"
+                              :default-time="['00:00:00', '23:59:59']"
+                              end-placeholder="结束日期">
+              </el-date-picker>
+            </el-form-item>
+          </el-col>
+          <!-- <el-form-item label="结束时间"
                       prop="endTime">
           <el-date-picker v-model="form.endTime"
+                          :picker-options="pickerOptionsEnd"
                           class="modelIpntWidth"
                           type="datetime"
                           placeholder="选择日期"
                           value-format="timestamp">
           </el-date-picker>
-        </el-form-item>
-        <el-form-item prop="fileList">
-          <el-upload class="upload-demo"
+        </el-form-item> -->
+          <el-col :span="12">
+            <el-form-item v-if="form.type == 1"
+                          prop="fileList"
+                          label="图片上传">
+              <el-upload :file-list="form.fileList"
+                         ref='clearUpload'
+                         action="/"
+                         :limit='1'
+                         :http-request="uploadFile"
+                         :on-exceed="handleExceed">
+                <el-button size="small"
+                           type="primary">点击上传</el-button>
+              </el-upload>
+              <!-- <el-upload class="upload-demo"
                      drag
                      :file-list="form.fileList"
                      ref='clearUpload'
@@ -144,13 +200,16 @@
             <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
             <div class="el-upload__tip"
                  slot="tip">只能上传jpg/png文件，且不超过500kb</div>
-          </el-upload>
-        </el-form-item>
+          </el-upload> -->
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-form-item label="公告内容"
                       prop="content">
-          <el-input type="textarea"
-                    v-model="form.content"></el-input>
+          <QuillEdito ref="quilledito"
+                      @updataFormContent='updataFormContent' />
         </el-form-item>
+
       </el-form>
       <span slot="footer"
             class="dialog-footer">
@@ -163,26 +222,46 @@
 </template>
 
 <script>
+import allwo from '@/utils/allow.js'
+import QuillEdito from './quillEdutor'
 import moment from 'moment'
 import { noticePage, addNotice, uploadPic, updateNotice } from '@/api/index';
 export default {
   name: 'basetable',
   data () {
+
+    let validate = function (rule, value, callback) {
+      if (Array.isArray(value)) { //格式为：daterange、datetimerange检测
+        value.map(function (item) {
+          if (item === "") {
+            return callback("日期不能为空")
+          }
+        })
+      } else { //格式为：date、datetime、year、month 检测
+        if (value === '') {
+          return callback("日期不能为空")
+        }
+      }
+
+      return callback()
+    }
+    let validatecontent = function (rule, value, callback) {
+      return callback()
+    }
     return {
       query: {
-        "page": 1,
-        "pageSize": 10
+        "current": 1,
+        "size": 10
       },
       operationTitle: '',
       tableData: [],
-      multipleSelection: [],
       editVisible: false,
       pageTotal: 0,
       form: {
-        fileList: [],
+        selectTimes: [],
       },
-      idx: -1,
-      id: -1,
+
+      tableHeight: window.innerHeight - 310,
       rules: {
         title: [
           { required: true, message: '请输入公告标题', trigger: 'blur' },
@@ -191,20 +270,23 @@ export default {
         type: [
           { required: true, message: '请选择公告类型', trigger: 'change' }
         ],
-        startTime: [
-          { type: 'date', required: true, message: '请选择开始日期', trigger: 'change' }
-        ],
-        endTime: [
-          { type: 'date', required: true, message: '请选择结束日期', trigger: 'change' }
-        ],
+        selectTimes: [{ required: true, validator: validate, trigger: 'change' }],
         fileList: [{
           message: '请上传',
           trigger: 'change',
           required: true
         }],
         content: [
-          { required: true, message: '请输入公告内容', trigger: 'blur' },
+          { required: true, validator: validatecontent, trigger: 'blur' },
         ],
+      },
+      pickerOptionsEnd: {
+        disabledDate: time => {
+          let beginDateVal = this.form.startTime;
+          if (beginDateVal) {
+            return time.getTime() < new Date(beginDateVal).getTime();
+          }
+        }
       },
       loading: false,
 
@@ -215,15 +297,22 @@ export default {
       ],
       options: [{
         value: 1,
-        label: '弹窗公告'
+        labels: '弹窗公告'
       }, {
         value: 2,
-        label: '消息公告'
+        labels: '消息公告'
       }],
     };
   },
+  components: {
+    QuillEdito
+  },
   created () {
-    this.getData();
+    allwo.Permissions('operation:notice:list').then((res) => {
+      if (res === true) {
+        this.getData();
+      }
+    })
   },
   filters: {
     formatDate: function (value) {
@@ -231,12 +320,18 @@ export default {
     }
   },
   methods: {
+    handelData (val) {
+      if (val) {
+        this.form.startTime = val[0]
+        this.form.endTime = val[1]
+      } else {
+        this.form.selectTimes = []
+      }
+    },
     // 获取 easy-mock 的模拟数据
     getData () {
       this.loading = true
       noticePage(this.query).then(res => {
-        console.log(res)
-
         this.tableData = res.data.body.list;
         this.tableData.forEach(element => {
           element.startTime = element.startTime * 1000
@@ -254,15 +349,11 @@ export default {
     },
     uploadFile (param) {
       this.form.fileList = []
-      console.log(param.file.name)
       var form = new FormData();
       form.append("file", param.file);
       form.append("type", 2);
       uploadPic(form).then((res) => {
-        console.log(res)
         if (res.data.code === 0) {
-          console.log(this.form)
-          console.log(res.data.body)
           this.form.noticeImg = res.data.body
           this.form.fileList = [{ name: param.file.name, url: this.form.noticeImg }]
         } else {
@@ -276,22 +367,20 @@ export default {
     },
     // 删除操作
     handleDelete (index, row) {
-      console.log(row)
-
       // 二次确认删除
       this.$confirm('确定要删除吗？', '提示', {
         type: 'warning'
       })
         .then(() => {
-          storeStart(3, row, '删除成功')
+          this.storeStart(3, row, '删除成功')
         })
         .catch(() => { });
     },
     storeStart (status, row, mes) {
       const NewRow = JSON.parse(JSON.stringify(row))
       NewRow.status = status
-      NewRow.startTime = NewRow.startTime / 1000;
-      NewRow.endTime = NewRow.endTime / 1000;
+      NewRow.startTime = this.form.startTime / 1000;
+      NewRow.endTime = this.form.endTime / 1000;
       updateNotice(NewRow).then((res) => {
         if (res.data.code === 0) {
           this.$message({
@@ -307,42 +396,51 @@ export default {
         }
       })
     },
+    updataFormContent (val) {
+      this.$set(this.form, 'content', val.html);
+    },
     // 编辑操作
     handleEdit (operation, index, row) {
       if (operation === 'add') {
-        this.operationTitle = '新增视频分类'
-        this.form = {}
+        this.operationTitle = '新增公告'
+        this.form = {
+          fileList: [],
+          type: 1,
+          selectTimes: [],
+        }
+
         this.editVisible = true;
         this.$nextTick(() => {
           this.$refs.formRules.clearValidate();
           this.$refs.clearUpload.clearFiles()
+          this.$refs.quilledito.remove()
         })
       } else {
-        this.operationTitle = '编辑视频分类'
+        this.operationTitle = '编辑公告'
         this.form = JSON.parse(JSON.stringify(row));
         this.form.fileList = [{ name: '预选图片', url: this.form.noticeImg }]
+        this.form.selectTimes = [this.form.startTime, this.form.endTime]
         this.editVisible = true;
         this.$nextTick(() => {
           this.$refs.formRules.clearValidate();
+          this.$refs.quilledito.newVal(this.form.content)
           // this.$refs.clearUpload.clearFiles()
         })
       }
     },
     // 保存编辑
     saveEdit () {
-      console.log(this.form)
       this.$refs.formRules.validate((valid) => {
         if (valid) {
           this.editVisible = false;
-          // if (this.operationTitle === '新增视频分类') {
           this.form.status = '2';
           this.form.startTime = this.form.startTime / 1000;
           this.form.endTime = this.form.endTime / 1000;
-
-          (this.operationTitle === '新增视频分类' ? addNotice : updateNotice)(this.form).then((res) => {
+          delete this.form.selectTimes;
+          (this.operationTitle === '新增公告' ? addNotice : updateNotice)(this.form).then((res) => {
             if (res.data.code === 0) {
               this.$message({
-                message: this.operationTitle === '新增视频分类' ? '新增成功' : '编辑成功',
+                message: this.operationTitle === '新增公告' ? '新增成功' : '编辑成功',
                 type: 'success'
               });
               this.getData()
@@ -354,34 +452,13 @@ export default {
             }
 
           })
-          // } else {
-
-          //   updateNotice(this.form).then((res) => {
-          //     if (res.data.code === 0) {
-          //       this.$message({
-          //         message: 编辑成功,
-          //         type: 'success'
-          //       });
-          //       this.getData()
-          //     } else {
-          //       this.$message({
-          //         message: res.data.msg,
-          //         type: 'warning'
-          //       });
-          //     }
-
-          //   })
-          // }
         } else {
-          console.log('error submit!!');
           return false;
         }
       });
-
     },
     handlePageChange (page) {
-      console.log(page)
-      this.query.page = page
+      this.query.current = page
       this.getData()
     }
   }
@@ -400,7 +477,9 @@ export default {
 .handle-select {
     width: 120px;
 }
-
+.ql-editor {
+    height: 400px;
+}
 .handle-input {
     width: 300px;
     display: inline-block;
@@ -414,11 +493,5 @@ export default {
 }
 .mr10 {
     margin-right: 10px;
-}
-.table-td-thumb {
-    display: block;
-    margin: auto;
-    width: 40px;
-    height: 40px;
 }
 </style>
