@@ -5,25 +5,28 @@
         <el-breadcrumb-item><i class="el-icon-lx-copy"></i> 管理员账号</el-breadcrumb-item>
       </el-breadcrumb>
     </div>
-    <div class="container">
-      <el-tabs v-model="tabIndex"
-               @tab-click='handliTable'>
-        <el-tab-pane key='1'
-                     label="子账号管理"
-                     name='1'>
-          <Child></Child>
-        </el-tab-pane>
-        <el-tab-pane key='2'
-                     label="角色管理"
-                     name='2'>
-          <Role></Role>
-        </el-tab-pane>
-      </el-tabs>
-    </div>
+    <!-- <div class="container"> -->
+    <el-tabs v-model="tabIndex"
+             type="border-card"
+             @tab-click='handliTable'>
+      <el-tab-pane key='1'
+                   label="子账号管理"
+                   name='1'>
+        <Child></Child>
+      </el-tab-pane>
+      <el-tab-pane key='2'
+                   v-if="isRole"
+                   label="角色管理"
+                   name='2'>
+        <Role v-allow="{name: 'sys:role'}"></Role>
+      </el-tab-pane>
+    </el-tabs>
   </div>
+  <!-- </div> -->
 </template>
 
 <script>
+import allwo from '@/utils/allow.js'
 import Child from './child.vue';
 import Role from './role.vue';
 export default {
@@ -35,14 +38,22 @@ export default {
         { title: '子账号管理' },
         { title: '角色管理' }
       ],
-      tabIndex: '1'
+      tabIndex: '1',
+      isRole: true,
+      isChild: true,
     }
   },
   methods: {
     handliTable (tab) {
       this.tabIndex = tab.name
-    }
+    },
+
   },
+  created () {
+    allwo.Permissions('sys:role').then((res) => {
+      this.isRole = res
+    })
+  }
 }
 
 </script>

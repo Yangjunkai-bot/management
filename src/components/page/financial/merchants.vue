@@ -25,21 +25,24 @@
                    class="handle-select mr10">
           <el-option key="0"
                      label="启用"
-                     value="username"></el-option>
+                     :value="1"></el-option>
           <el-option key="1"
                      label="停用"
-                     value="ip"></el-option>
+                     :value="0"></el-option>
         </el-select>
         <el-button type="primary"
                    icon="el-icon-search"
                    v-preventClick
+                   v-allow="{name: 'finance:merch:list'}"
                    @click="handleSearch">搜索</el-button>
         <el-button type="danger"
                    v-preventClick
+                   v-allow="{name: 'finance:merch:list'}"
                    @click="remove">重制</el-button>
 
         <el-button type="primary"
                    style="float:right"
+                   v-allow="{name: 'finance:merch:save'}"
                    @click="handleEdit('add')"
                    class="mr10">新增商户</el-button>
       </div>
@@ -82,6 +85,7 @@
           </template>
         </el-table-column>
         <el-table-column label="开关"
+                         v-if="allowsVal"
                          align='center'>
           <template slot-scope="scope">
             <el-switch v-model="scope.row.status"
@@ -94,9 +98,11 @@
                          align="center">
           <template slot-scope="scope">
             <el-button type="text"
+                       v-allow="{name: 'finance:merch:update'}"
                        @click="handleEdit('edit',scope.$index, scope.row)">编辑</el-button>
             <el-button type="text"
                        class="red"
+                       v-allow="{name: 'finance:merch:delete'}"
                        @click="handleDelete(scope.$index, scope.row)">删除</el-button>
           </template>
         </el-table-column>
@@ -183,8 +189,9 @@
 </template>
 
 <script>
+import allwo from '@/utils/allow.js'
 import moment from 'moment'
-import { settingList, settingSave, settingUpdate, settingDelete } from '@/api/index';
+import { settingList, settingSave, settingUpdate, settingDelete, settingUpdateStatus } from '@/api/index';
 export default {
   name: 'basetable',
 
@@ -206,6 +213,7 @@ export default {
       selectTitle: 'merchNo',
       selectContent: '',
       editVisible: false,
+      allowsVal: false,
       tableHeight: window.innerHeight - 310,
       pageTotal: 0,
       form: {},
@@ -232,7 +240,14 @@ export default {
     };
   },
   created () {
-    this.getData();
+    allwo.Permissions('finance:merch:update').then((res) => {
+      this.allowsVal = res
+    })
+    allwo.Permissions('finance:merch:list').then((res) => {
+      if (res === true) {
+        this.getData();
+      }
+    })
   },
   filters: {
     formatDate: function (value) {
@@ -245,34 +260,19 @@ export default {
         this.tableData = res.data.body.records;
         this.tableData.forEach(element => {
           element.updateTime = element.updateTime * 1000
-          element.status = element.status === 0 ? true : false
+          element.status = element.status === 0 ? false : true
         });
         this.pageTotal = res.data.body.total
+        this.query = {
+          size: res.data.body.size,
+          current: res.data.body.current
+        }
       });
     },
     handleSwitch (value, row) {
-      const newStatr = value ? 0 : 1
-      this.storeStart(newStatr, row)
-
-    },
-    storeStart (status, row) {
-      const NewRow = JSON.parse(JSON.stringify(row))
-      NewRow.status = status
-      NewRow.createTime = NewRow.createTime / 1000;
-      let mess = ''
-      if (status === 0) {
-        mess = '已启动'
-      } else if (status === 1) {
-        mess = '已禁用'
-      } else {
-        mess = '删除成功'
-      }
-      updateAd(NewRow).then((res) => {
+      const newStatr = value ? 1 : 0
+      settingUpdateStatus({ 'id': row.id, 'status': newStatr }).then((res) => {
         if (res.data.code === 0) {
-          this.$message({
-            message: mess,
-            type: 'success'
-          });
           this.getData()
         } else {
           this.$message({
@@ -318,10 +318,10 @@ export default {
         .then(() => {
           settingDelete(row.id).then((res) => {
             if (res.data.code === 0) {
-              // this.$message({
-              //   message: '删除成功',
-              //   type: 'success'
-              // });
+              this.$message({
+                message: '删除成功',
+                type: 'success'
+              });
               this.getData()
             } else {
               this.$message({
@@ -336,21 +336,19 @@ export default {
     // 编辑操作
     handleEdit (operation, index, row) {
       if (operation === 'add') {
-        this.operationTitle = '新增广告'
+        this.operationTitle = '新增商户'
         this.form = {}
         this.editVisible = true;
         this.$nextTick(() => {
           this.$refs.formRules.clearValidate();
-          this.$refs.clearUpload.clearFiles()
         })
       } else {
-        this.operationTitle = '编辑广告'
+        this.operationTitle = '编辑商户'
         this.form = JSON.parse(JSON.stringify(row));
         this.form.fileList = [{ name: '预选图片', url: this.form.noticeImg }]
         this.editVisible = true;
         this.$nextTick(() => {
           this.$refs.formRules.clearValidate();
-          // this.$refs.clearUpload.clearFiles()
         })
       }
 

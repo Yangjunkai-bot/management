@@ -38,9 +38,11 @@
       <el-button type="primary"
                  icon="el-icon-search"
                  v-preventClick
+                 v-allow="{name: 'sys:log:operate'}"
                  @click="handleSearch">搜索</el-button>
       <el-button type="danger"
                  v-preventClick
+                 v-allow="{name: 'sys:log:operate'}"
                  @click="remove">重制</el-button>
     </div>
 
@@ -97,6 +99,7 @@
 </template>
 
 <script>
+import allwo from '@/utils/allow.js'
 import moment from 'moment'
 import { operateList } from '@/api/index';
 export default {
@@ -118,7 +121,11 @@ export default {
     };
   },
   created () {
-    this.getData();
+    allwo.Permissions('sys:log:operate').then((res) => {
+      if (res === true) {
+        this.getData();
+      }
+    })
   },
   filters: {
     formatDate: function (value) {
@@ -159,6 +166,10 @@ export default {
       operateList(this.query).then(res => {
         this.tableData = res.data.body.content;
         this.pageTotal = res.data.body.totalElements
+        this.query = {
+          current: res.data.body.number + 1,
+          size: res.data.body.size
+        }
       });
     },
     // 触发搜索按钮

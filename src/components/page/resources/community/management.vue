@@ -22,9 +22,11 @@
       <el-button type="primary"
                  icon="el-icon-search"
                  v-preventClick
+                 v-allow="{name: 'content:userCommunity:list'}"
                  @click="handleSearch">搜索</el-button>
       <el-button type="danger"
                  v-preventClick
+                 v-allow="{name: 'content:userCommunity:list'}"
                  @click="remove">重制</el-button>
     </div>
     <el-table :data="tableData"
@@ -89,10 +91,13 @@
                        align="center">
         <template slot-scope="scope">
           <el-button type="text"
+                     v-allow="{name: 'content:userCommunity:update'}"
                      @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
           <el-button type="text"
+                     v-allow="{name: 'content:userCommunity:top'}"
                      @click="handleIsPlaced(scope.row)">{{ scope.row.top === 0 ? '取消置顶' : '置顶' }}</el-button>
           <el-button type="text"
+                     v-allow="{name: 'content:userCommunity:delete'}"
                      class="red"
                      @click="handleDelete(scope.row)">删除</el-button>
         </template>
@@ -141,6 +146,7 @@
                       fit="fit"
                       style="height:200px"></el-image>
             <i class="el-icon-close"
+               v-if="allowsVal"
                @click="delImg(data,index)"></i>
           </div>
 
@@ -200,6 +206,7 @@
 </template>
 
 <script>
+import allwo from '@/utils/allow.js'
 import moment from 'moment'
 import { getUserCommunityPage, getTagList, updateUserCommunity, delUserCommunityImage, updateTopStatus } from '@/api/index';
 export default {
@@ -221,6 +228,7 @@ export default {
       delList: [],
       editVisible: false,
       isPlacedVisible: false,
+      allowsVal: false,
       isPlacedform: {
         topEndTime: ''
       },
@@ -245,8 +253,16 @@ export default {
     };
   },
   created () {
-    this.getData();
-    this.getTagList()
+    allwo.Permissions('content:userCommunity:delImage').then((res) => {
+      this.allowsVal = res
+    })
+    allwo.Permissions('content:userCommunity:list').then((res) => {
+      if (res === true) {
+        this.getData();
+        this.getTagList()
+      }
+    })
+
   },
   filters: {
     formatDate: function (value) {

@@ -30,13 +30,16 @@
         <el-button type="primary"
                    icon="el-icon-search"
                    v-preventClick
+                   v-allow="{name: 'report:operation:list'}"
                    @click="handleSearch">搜索</el-button>
         <el-button type="danger"
                    v-preventClick
+                   v-allow="{name: 'report:operation:list'}"
                    @click="remove">重制</el-button>
         <el-button type="primary"
                    icon="el-icon-upload2"
                    v-preventClick
+                   v-allow="{name: 'report:operation:download'}"
                    @click="rexport">导出报表</el-button>
       </div>
       <el-tag class="tag">注册用户：{{num.totalUser}}</el-tag>
@@ -136,6 +139,7 @@
 </template>
 
 <script>
+import allwo from '@/utils/allow.js'
 import moment from 'moment'
 import { getOperationReportPage, getChannelList, downloadOperationReport } from '@/api/index';
 export default {
@@ -156,8 +160,12 @@ export default {
     };
   },
   created () {
-    this.getData();
-    this.getChannelList()
+    allwo.Permissions('report:operation:list').then((res) => {
+      if (res === true) {
+        this.getData();
+        this.getChannelList()
+      }
+    })
   },
   filters: {
     formatDate: function (value) {

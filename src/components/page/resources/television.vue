@@ -53,10 +53,13 @@
             {{scope.row.subscribe ? scope.row.subscribe +'天' : '-'}}
           </template>
         </el-table-column>
-        <el-table-column label="启/停用"
+        <el-table-column v-if="allowsVal"
+                         label="启/停用"
                          align='center'>
           <template slot-scope="scope">
             <el-switch v-model="scope.row.status"
+                       :active-value="0"
+                       :inactive-value="1"
                        @change='(event)=>{handleSwitch(event,scope.row)}'>
             </el-switch>
           </template>
@@ -66,6 +69,7 @@
                          align="center">
           <template slot-scope="scope">
             <el-button type="text"
+                       v-allow="{name: 'content:tvChannel:update'}"
                        @click="handleEdit('edit',scope.$index, scope.row)">编辑</el-button>
           </template>
         </el-table-column>
@@ -92,7 +96,9 @@
           <el-col :span="12">
             <el-form-item label="启/停用"
                           prop="status">
-              <el-switch v-model="form.status">
+              <el-switch :active-value="0"
+                         :inactive-value="1"
+                         v-model="form.status">
               </el-switch>
             </el-form-item>
           </el-col>
@@ -140,6 +146,7 @@
 </template>
 
 <script>
+import allwo from '@/utils/allow.js'
 import moment from 'moment'
 import { getTvChannelList, updateTvChannel } from '@/api/index';
 export default {
@@ -150,6 +157,7 @@ export default {
       tableData: [],
       editVisible: false,
       pageTotal: 0,
+      allowsVal: false,
       form: {},
       rules: {
         name: [
@@ -173,7 +181,14 @@ export default {
     };
   },
   created () {
-    this.getData();
+    allwo.Permissions('content:tvChannel:opt').then((res) => {
+      this.allowsVal = res
+    })
+    allwo.Permissions('content:tvChannel:list').then((res) => {
+      if (res === true) {
+        this.getData();
+      }
+    })
   },
   filters: {
     formatDate: function (value) {
@@ -187,11 +202,11 @@ export default {
       });
     },
     handleSwitch (value, row) {
-      const newStatr = value ? 0 : 1
-      this.storeStart(newStatr, row)
+      this.storeStart(value, row)
 
     },
     storeStart (status, row) {
+      console.log(status)
       const NewRow = JSON.parse(JSON.stringify(row))
       NewRow.status = status
       // NewRow.createTime = NewRow.createTime / 1000;
@@ -203,10 +218,10 @@ export default {
       }
       updateTvChannel(NewRow).then((res) => {
         if (res.data.code === 0) {
-          this.$message({
-            message: mess,
-            type: 'success'
-          });
+          // this.$message({
+          //   message: mess,
+          //   type: 'success'
+          // });
           this.getData()
         } else {
           this.$message({

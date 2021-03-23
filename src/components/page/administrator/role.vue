@@ -6,6 +6,7 @@
     <div class="handle-box">
       <el-button type="primary"
                  @click="handleEdit('add')"
+                 v-allow="{name: 'sys:role:save'}"
                  class="mr10">新增角色</el-button>
     </div>
     <el-table :data="tableData"
@@ -45,9 +46,11 @@
                        align="center">
         <template slot-scope="scope">
           <el-button type="text"
+                     v-allow="{name: 'sys:role:update'}"
                      @click="handleEdit('edit', scope.row)">编辑</el-button>
           <el-button type="text"
                      class="red"
+                     v-allow="{name: 'sys:role:delete'}"
                      @click="handleDelete(scope.$index, scope.row)">删除</el-button>
         </template>
       </el-table-column>
@@ -68,6 +71,7 @@
 <script>
 import RoleModel from './componets/rolemodel'
 import { roleList } from '@/api/index';
+import allwo from '@/utils/allow.js'
 export default {
   name: 'basetable',
   data () {
@@ -92,7 +96,15 @@ export default {
     RoleModel
   },
   created () {
-    this.getData();
+    allwo.Permissions('sys:log:login').then((res) => {
+      if (res === true) {
+        allwo.Permissions('sys:role:list').then((res) => {
+          if (res === true) {
+            this.getData();
+          }
+        })
+      }
+    })
   },
   methods: {
     // 获取 easy-mock 的模拟数据
@@ -106,6 +118,7 @@ export default {
         .catch(error => {
           this.loading = false
         })
+
     },
     handlePageChange (page) {
       this.query.current = page

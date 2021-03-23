@@ -10,6 +10,7 @@
     <div class="container">
       <div class="handle-box">
         <el-button type="primary"
+                   v-allow="{name: 'operation:movieClassification:add'}"
                    @click="handleEdit('add')"
                    class="mr10">新增视频分类</el-button>
       </div>
@@ -62,10 +63,12 @@
                          align="center">
           <template slot-scope="scope">
             <el-button type="text"
-                       @click="handleEdit('edit',scope.$index, scope.row)">编辑</el-button>
+                       @click="handleEdit('edit',scope.$index, scope.row)"
+                       v-allow="{name: 'operation:movieClassification:update'}">编辑</el-button>
             <el-button type="text"
                        class="red"
-                       @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+                       @click="handleDelete(scope.$index, scope.row)"
+                       v-allow="{name: 'operation:movieClassification:delete'}">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -86,6 +89,7 @@
             <el-form-item label="排序"
                           prop="sequence">
               <el-input-number v-model="form.sequence"
+                               :min="1"
                                controls-position="right"
                                class="modelIpntWidth"></el-input-number>
             </el-form-item>
@@ -114,6 +118,7 @@
 </template>
 
 <script>
+import allwo from '@/utils/allow.js'
 import moment from 'moment'
 import { MovieClassificationList, addMovieClassification, updateMovieClassification } from '@/api/index';
 export default {
@@ -143,7 +148,13 @@ export default {
     };
   },
   created () {
-    this.getData();
+    allwo.Permissions('operation:movieClassification:list').then((res) => {
+      console.log(res)
+      if (res === true) {
+        this.getData();
+      }
+    })
+
   },
   filters: {
     formatDate: function (value) {

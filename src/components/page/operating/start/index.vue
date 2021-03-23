@@ -10,6 +10,7 @@
     <div class="container">
       <div class="handle-box">
         <el-button type="primary"
+                   v-allow="{name: 'operation:advertising:add'}"
                    @click="handleEdit('add')"
                    class="mr10">新增广告</el-button>
       </div>
@@ -68,7 +69,8 @@
             {{scope.row.updateBy ? scope.row.updateBy : '-'}}
           </template>
         </el-table-column>
-        <el-table-column label="开关"
+        <el-table-column v-if="allowsVal"
+                         label="开关"
                          align='center'>
           <template slot-scope="scope">
             <el-switch v-model="scope.row.status"
@@ -81,10 +83,12 @@
                          align="center">
           <template slot-scope="scope">
             <el-button type="text"
-                       @click="handleEdit('edit',scope.$index, scope.row)">编辑</el-button>
+                       @click="handleEdit('edit',scope.$index, scope.row)"
+                       v-allow="{name: 'operation:advertising:update'}">编辑</el-button>
             <el-button type="text"
                        class="red"
-                       @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+                       @click="handleDelete(scope.$index, scope.row)"
+                       v-allow="{name: 'operation:advertising:delete'}">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -168,6 +172,7 @@
 
 <script>
 import moment from 'moment'
+import allwo from '@/utils/allow.js'
 import { getAdPage, addAd, updateAd, uploadPic } from '@/api/index';
 export default {
   name: 'basetable',
@@ -187,6 +192,7 @@ export default {
         type: 1
       },
       operationTitle: '',
+      allowsVal: false,
       tableData: [],
       editVisible: false,
       tableHeight: window.innerHeight - 310,
@@ -217,7 +223,14 @@ export default {
     };
   },
   created () {
-    this.getData();
+    allwo.Permissions('operation:advertising:update').then((res) => {
+      this.allowsVal = res
+    })
+    allwo.Permissions('operation:advertising:list').then((res) => {
+      if (res === true) {
+        this.getData();
+      }
+    })
   },
   filters: {
     formatDate: function (value) {

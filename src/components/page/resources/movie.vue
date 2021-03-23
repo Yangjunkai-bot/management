@@ -35,9 +35,11 @@
         <el-button type="primary"
                    icon="el-icon-search"
                    v-preventClick
+                   v-allow="{name: 'content:movie:list'}"
                    @click="handleSearch">搜索</el-button>
         <el-button type="danger"
                    v-preventClick
+                   v-allow="{name: 'content:movie:list'}"
                    @click="remove">重制</el-button>
       </div>
       <el-table :data="tableData"
@@ -113,9 +115,11 @@
                          align="center">
           <template slot-scope="scope">
             <el-button type="text"
+                       v-allow="{name: 'content:movie:update'}"
                        @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
             <el-button type="text"
                        class="red"
+                       v-allow="{name: 'content:movie:delete'}"
                        @click="handleDelete(scope.$index, scope.row)">删除</el-button>
           </template>
         </el-table-column>
@@ -220,6 +224,7 @@
                           label="精选排序"
                           prop="description">
               <el-input-number style="width:100%"
+                               :min="1"
                                v-model="form.boutiqueSequence"
                                controls-position="right"></el-input-number>
             </el-form-item>
@@ -242,6 +247,7 @@
 </template>
 
 <script>
+import allwo from '@/utils/allow.js'
 import { getMoviePage, MovieClassificationList, updateMovie } from '@/api/index';
 export default {
   name: 'basetable',
@@ -283,8 +289,13 @@ export default {
     };
   },
   created () {
-    this.getData();
-    this.getMovieClassificationList()
+    allwo.Permissions('content:movie:list').then((res) => {
+      if (res === true) {
+        this.getData();
+        this.getMovieClassificationList()
+      }
+    })
+
   },
   methods: {
     remove () {
@@ -333,16 +344,7 @@ export default {
     handleSelectionChange (val) {
       this.multipleSelection = val;
     },
-    delAllSelection () {
-      const length = this.multipleSelection.length;
-      let str = '';
-      this.delList = this.delList.concat(this.multipleSelection);
-      for (let i = 0; i < length; i++) {
-        str += this.multipleSelection[i].name + ' ';
-      }
-      this.$message.error(`删除了${str}`);
-      this.multipleSelection = [];
-    },
+
     // 编辑操作
     handleEdit (index, row) {
       this.form = JSON.parse(JSON.stringify(row));

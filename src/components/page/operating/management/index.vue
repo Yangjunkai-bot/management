@@ -10,6 +10,7 @@
     <div class="container">
       <div class="handle-box">
         <el-button type="primary"
+                   v-allow="{name: 'operation:notice:add'}"
                    @click="handleEdit('add')"
                    class="mr10">新增公告</el-button>
       </div>
@@ -88,16 +89,20 @@
                          align="center">
           <template slot-scope="scope">
             <el-button type="text"
+                       v-allow="{name: 'operation:notice:publish'}"
                        v-if="scope.row.status === 1"
                        @click="storeStart(0, scope.row,'已发布')">发布</el-button>
             <el-button type="text"
+                       v-allow="{name: 'operation:notice:stop'}"
                        v-if="scope.row.status == 0"
                        class="red"
                        @click="storeStart(3, scope.row,'已停用')">停用</el-button>
             <el-button type="text"
+                       v-allow="{name: 'operation:notice:update'}"
                        @click="handleEdit('edit',scope.$index, scope.row)">编辑</el-button>
             <el-button type="text"
                        class="red"
+                       v-allow="{name: 'operation:notice:delete'}"
                        @click="handleDelete(scope.$index, scope.row)">删除</el-button>
           </template>
         </el-table-column>
@@ -148,14 +153,14 @@
           <el-col :span="12">
             <el-form-item label="开始时间"
                           prop="selectTimes">
-              <el-date-picker v-model="selectTimes"
+              <el-date-picker v-model="form.selectTimes"
                               @change='handelData'
                               class="modelIpntWidth"
                               type="datetimerange"
                               range-separator="至"
                               start-placeholder="开始日期"
                               value-format="timestamp"
-                              :default-time="['23:59:59', '23:59:59']"
+                              :default-time="['00:00:00', '23:59:59']"
                               end-placeholder="结束日期">
               </el-date-picker>
             </el-form-item>
@@ -217,12 +222,32 @@
 </template>
 
 <script>
+import allwo from '@/utils/allow.js'
 import QuillEdito from './quillEdutor'
 import moment from 'moment'
 import { noticePage, addNotice, uploadPic, updateNotice } from '@/api/index';
 export default {
   name: 'basetable',
   data () {
+
+    let validate = function (rule, value, callback) {
+      if (Array.isArray(value)) { //格式为：daterange、datetimerange检测
+        value.map(function (item) {
+          if (item === "") {
+            return callback("日期不能为空")
+          }
+        })
+      } else { //格式为：date、datetime、year、month 检测
+        if (value === '') {
+          return callback("日期不能为空")
+        }
+      }
+
+      return callback()
+    }
+    let validatecontent = function (rule, value, callback) {
+      return callback()
+    }
     return {
       query: {
         "current": 1,
@@ -233,8 +258,9 @@ export default {
       editVisible: false,
       pageTotal: 0,
       form: {
+        selectTimes: [],
       },
-      selectTimes: [],
+
       tableHeight: window.innerHeight - 310,
       rules: {
         title: [
@@ -244,19 +270,14 @@ export default {
         type: [
           { required: true, message: '请选择公告类型', trigger: 'change' }
         ],
-        selectTimes: [{
-          type: 'date',
-          required: true,
-          message: '请选择时间',
-          trigger: 'change'
-        }],
+        selectTimes: [{ required: true, validator: validate, trigger: 'change' }],
         fileList: [{
           message: '请上传',
           trigger: 'change',
           required: true
         }],
         content: [
-          { required: true, message: '请输入公告内容', trigger: 'blur' },
+          { required: true, validator: validatecontent, trigger: 'blur' },
         ],
       },
       pickerOptionsEnd: {
@@ -287,7 +308,11 @@ export default {
     QuillEdito
   },
   created () {
-    this.getData();
+    allwo.Permissions('operation:notice:list').then((res) => {
+      if (res === true) {
+        this.getData();
+      }
+    })
   },
   filters: {
     formatDate: function (value) {
@@ -296,8 +321,12 @@ export default {
   },
   methods: {
     handelData (val) {
-      this.form.startTime = val[0] / 1000
-      this.form.endTime = val[1] / 1000
+      if (val) {
+        this.form.startTime = val[0]
+        this.form.endTime = val[1]
+      } else {
+        this.form.selectTimes = []
+      }
     },
     // 获取 easy-mock 的模拟数据
     getData () {
@@ -343,13 +372,15 @@ export default {
         type: 'warning'
       })
         .then(() => {
-          storeStart(3, row, '删除成功')
+          this.storeStart(3, row, '删除成功')
         })
         .catch(() => { });
     },
     storeStart (status, row, mes) {
       const NewRow = JSON.parse(JSON.stringify(row))
       NewRow.status = status
+      NewRow.startTime = this.form.startTime / 1000;
+      NewRow.endTime = this.form.endTime / 1000;
       updateNotice(NewRow).then((res) => {
         if (res.data.code === 0) {
           this.$message({
@@ -366,7 +397,7 @@ export default {
       })
     },
     updataFormContent (val) {
-      this.form.content = val.html
+      this.$set(this.form, 'content', val.html);
     },
     // 编辑操作
     handleEdit (operation, index, row) {
@@ -374,9 +405,9 @@ export default {
         this.operationTitle = '新增公告'
         this.form = {
           fileList: [],
-          type: 1
+          type: 1,
+          selectTimes: [],
         }
-        this.selectTimes = []
 
         this.editVisible = true;
         this.$nextTick(() => {
@@ -388,7 +419,7 @@ export default {
         this.operationTitle = '编辑公告'
         this.form = JSON.parse(JSON.stringify(row));
         this.form.fileList = [{ name: '预选图片', url: this.form.noticeImg }]
-        this.selectTimes = [this.form.startTime, this.form.endTime]
+        this.form.selectTimes = [this.form.startTime, this.form.endTime]
         this.editVisible = true;
         this.$nextTick(() => {
           this.$refs.formRules.clearValidate();
@@ -405,7 +436,7 @@ export default {
           this.form.status = '2';
           this.form.startTime = this.form.startTime / 1000;
           this.form.endTime = this.form.endTime / 1000;
-
+          delete this.form.selectTimes;
           (this.operationTitle === '新增公告' ? addNotice : updateNotice)(this.form).then((res) => {
             if (res.data.code === 0) {
               this.$message({

@@ -22,9 +22,11 @@
       <el-button type="primary"
                  icon="el-icon-search"
                  v-preventClick
+                 v-allow="{name: 'content:userCommunity:verify'}"
                  @click="handleSearch">搜索</el-button>
       <el-button type="danger"
                  v-preventClick
+                 v-allow="{name: 'content:userCommunity:verify'}"
                  @click="remove">重制</el-button>
     </div>
     <el-table :data="tableData"
@@ -89,10 +91,13 @@
                        align="center">
         <template slot-scope="scope">
           <el-button type="text"
+                     v-allow="{name: 'content:userCommunity:detail'}"
                      @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
           <el-button type="text"
+                     v-allow="{name: 'content:userCommunity:pass'}"
                      @click="handleDelete( scope.row,'true')">通过</el-button>
           <el-button type="text"
+                     v-allow="{name: 'content:userCommunity:refuse'}"
                      class="red"
                      @click="handleDelete(scope.row,'false')">拒绝</el-button>
         </template>
@@ -167,6 +172,7 @@
 </template>
 
 <script>
+import allwo from '@/utils/allow.js'
 import moment from 'moment'
 import { getUserCommunityPage, getTagList, updateUserCommunity, delUserCommunityImage } from '@/api/index';
 export default {
@@ -198,8 +204,12 @@ export default {
     };
   },
   created () {
-    this.getData();
-    this.getTagList()
+    allwo.Permissions('content:userCommunity:verify').then((res) => {
+      if (res === true) {
+        this.getData();
+        this.getTagList()
+      }
+    })
   },
   filters: {
     formatDate: function (value) {
@@ -235,6 +245,7 @@ export default {
     },
     // 获取 easy-mock 的模拟数据
     getData () {
+
       getUserCommunityPage(this.query).then(res => {
         this.tableData = res.data.body.list;
         res.data.body.list.forEach(element => {
@@ -248,6 +259,7 @@ export default {
         // this.tableData.newAttachmentVoList = newAttachmentVoList
         this.pageTotal = res.data.body.totalCount;
       });
+
     },
     // 触发搜索按钮
     handleSearch () {

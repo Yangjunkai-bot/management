@@ -52,10 +52,16 @@ export default {
       this.$refs.login.validate(valid => {
         if (valid) {
           Login(this.param).then((res) => {
-            localStorage.setItem('username', this.param.username);
-            localStorage.setItem('token', res.data.body);
-            this.$message.success('登录成功');
-            this.$router.push('/dashboard');
+            if (res.data.code === 0) {
+              localStorage.setItem('username', this.param.username);
+              localStorage.setItem('token', res.data.body);
+              this.$message.success('登录成功');
+              this.$router.push('/dashboard');
+              this.$store.dispatch('GetMenuList')
+            } else {
+              this.$message.error(res.data.msg);
+            }
+
           }).catch(err => {
 
           })

@@ -75,7 +75,9 @@ export default {
       if (command == 'loginout') {
         localStorage.removeItem('username');
         localStorage.removeItem('username');
-        this.$router.push('/login');
+        localStorage.removeItem('token');
+        // this.$router.push('/login');
+        location.href = '';
       }
     },
     // 侧边栏折叠

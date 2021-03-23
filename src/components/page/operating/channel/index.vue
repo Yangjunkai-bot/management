@@ -11,6 +11,7 @@
       <div class="handle-box">
         <el-button type="primary"
                    @click="handleEdit('add')"
+                   v-allow="{name: 'operation:channel:add'}"
                    class="mr10">新增渠道</el-button>
       </div>
       <el-table :data="tableData"
@@ -50,6 +51,7 @@
                          align="center">
           <template slot-scope="scope">
             <el-button type="text"
+                       v-allow="{name: 'operation:channel:update'}"
                        @click="handleEdit('edit',scope.$index, scope.row)">编辑</el-button>
           </template>
         </el-table-column>
@@ -71,7 +73,7 @@
           <el-input v-model="form.name"></el-input>
         </el-form-item>
 
-        <el-form-item label="渠道说明"
+        <el-form-item label="渠道标示"
                       prop="code">
           <el-input type="textarea"
                     v-model="form.code"></el-input>
@@ -88,11 +90,26 @@
 </template>
 
 <script>
+import allwo from '@/utils/allow.js'
 import moment from 'moment'
 import { getChannelList, addOperationChannel, updateOperationChannel } from '@/api/index';
 export default {
   name: 'basetable',
   data () {
+    let validCode = (rule, value, callback) => {
+      const regName = /^[a-zA-Z0-9][a-zA-Z0-9_]{0,9}$/
+      if (value === "") {
+        callback(new Error("请输入渠道标示"));
+      } else if (!regName.test(value)) {
+        callback(
+          new Error(
+            "用户名要求数字、字母、下划线的组合 必须以数字和字母开头 长度为10个字符"
+          )
+        );
+      } else {
+        callback()
+      }
+    }
     return {
       operationTitle: '',
       tableData: [],
@@ -104,18 +121,21 @@ export default {
       form: {},
       rules: {
         name: [
-          { required: true, message: '渠道名称', trigger: 'blur' },
+          { required: true, message: '请输入渠道名称', trigger: 'blur' },
           { max: 10, message: '最大输入10个字符', trigger: 'blur' }
         ],
         code: [
-          { required: true, message: '渠道标示', trigger: 'blur' },
-          { max: 10, message: '最大输入10个字符', trigger: 'blur' }
+          { required: true, validator: validCode, trigger: "blur" }
         ],
       }
     };
   },
   created () {
-    this.getData();
+    allwo.Permissions('operation:channel:list').then((res) => {
+      if (res === true) {
+        this.getData();
+      }
+    })
   },
   filters: {
     formatDate: function (value) {

@@ -8,7 +8,8 @@
       </el-breadcrumb>
     </div>
     <div class="container">
-      <div class="handle-box">
+      <div v-if="allowsVal"
+           class="handle-box">
         活动开关:
         <el-switch v-model="status"
                    @change='updateVerify'>
@@ -51,6 +52,7 @@
                          align="center">
           <template slot-scope="scope">
             <el-button type="text"
+                       v-allow="{name: 'activity:sign:update'}"
                        @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
           </template>
         </el-table-column>
@@ -106,6 +108,7 @@
 </template>
 
 <script>
+import allwo from '@/utils/allow.js'
 import moment from 'moment'
 import { getActivitySign, updateActivityStatus, updateActivityConfig } from '@/api/index';
 export default {
@@ -119,6 +122,7 @@ export default {
       tableData: [],
       editVisible: false,
       form: {},
+      allowsVal: false,
       rules: {
         amount: [
           { required: true, message: '请输入奖励数量', trigger: 'blur' },
@@ -127,7 +131,14 @@ export default {
     };
   },
   created () {
-    this.getData();
+    allwo.Permissions('activity:sign:open').then((res) => {
+      this.allowsVal = res
+    })
+    allwo.Permissions('activity:sign:list').then((res) => {
+      if (res === true) {
+        this.getData();
+      }
+    })
   },
   filters: {
     formatDate: function (value) {

@@ -50,7 +50,8 @@
           {{scope.row.lastLogoutTime}}
         </template>
       </el-table-column>
-      <el-table-column label="谷歌验证"
+      <el-table-column v-if="allowsVal"
+                       label="谷歌验证"
                        align="center">
         <template slot-scope="scope">
           <el-switch v-model="scope.row.verify"
@@ -58,7 +59,8 @@
           </el-switch>
         </template>
       </el-table-column>
-      <el-table-column label="启/停用"
+      <el-table-column v-if="allowsVal"
+                       label="启/停用"
                        align="center">
         <template slot-scope="scope">
           <el-switch v-model="scope.row.enabled"
@@ -71,12 +73,15 @@
                        align="center">
         <template slot-scope="scope">
           <el-button type="text"
+                     v-allow="{name: 'sys:user:detail'}"
                      @click="handleDetails(scope.row)">详情</el-button>
           <el-button type="text"
-                     class="red"
                      v-if="scope.row.username !== nowusername"
+                     class="red"
+                     v-allow="{name: 'sys:user:delete'}"
                      @click="handleDelete(scope.$index, scope.row.id)">删除账号</el-button>
           <el-button type="text"
+                     v-allow="{name: 'sys:user:update'}"
                      @click="handleEdit( scope.row.id)">修改密码</el-button>
           <el-button type="text"
                      v-if='scope.row.online === 1'
@@ -129,6 +134,7 @@
 
 <script>
 import moment from 'moment';
+import allwo from '@/utils/allow.js'
 import { userList, userEnabled, userOffline, goolgeVerify, userUpdatePassword, userDelete } from '@/api/index';
 import ChildHeader from './componets/childHeader.vue';
 import Details from './componets/details.vue';
@@ -159,6 +165,7 @@ export default {
       tableHeight: window.innerHeight - 380,
       pageTotal: 0,
       form: {},
+      allowsVal: false,
       multipleSelection: [],
       userPassRules: {
         password: [
@@ -173,7 +180,14 @@ export default {
     };
   },
   created () {
-    this.getData();
+    allwo.Permissions('sys:user:update').then((res) => {
+      this.allowsVal = res
+    })
+    allwo.Permissions('sys:user:list').then((res) => {
+      if (res === true) {
+        this.getData();
+      }
+    })
     this.nowusername = localStorage.getItem('username')
   },
   components: {
@@ -281,6 +295,10 @@ export default {
         this.tableData = res.data.body.records;
         this.pageTotal = res.data.body.total || 0
         this.loading = false
+        this.query = {
+          current: res.data.body.current,
+          size: res.data.body.size
+        }
       })
         .catch(error => {
           this.loading = false

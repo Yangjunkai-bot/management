@@ -1,6 +1,7 @@
 <template>
   <div>
     <el-button type="primary"
+               v-allow="{name: 'sys:user:update'}"
                class="handle-del mr10"
                @click="updAllSelection">批量变更角色</el-button>
     <el-select v-model="selectDefault"
@@ -22,15 +23,18 @@
               @keyup.enter.native="handleSearch('sear')"
               class="handle-input mr10"></el-input>
     <el-button type="primary"
+               v-allow="{name: 'sys:user:list'}"
                icon="el-icon-search"
                @click="handleSearch('sear')">搜索</el-button>
     <el-button type="danger"
+               v-allow="{name: 'sys:user:list'}"
                @click="handleSearch('remove')">重制</el-button>
     <el-button type="primary"
                @click="handleSearch"
                style="float:right">导出报表</el-button>
     <el-button type="primary"
                @click="handleAddButton"
+               v-allow="{name: 'sys:user:save'}"
                icon="el-icon-plus"
                style="float:right">新增</el-button>
     <!-- 用户新增弹窗 -->
@@ -218,7 +222,7 @@ export default {
       dialogVisible: false,
       roleList: [],
       ruleForm: {
-
+        enabled: false
       },
       selectedRole: {},
       updataAllFrom: {
@@ -305,10 +309,11 @@ export default {
       })
     },
     handleAddButton () {
-      this.ruleForm = {}
+      this.ruleForm = {
+        enabled: false
+      }
       this.editVisible = true
       this.$nextTick(() => {
-
         this.$refs['ruleForm'].clearValidate();
       })
     },
@@ -316,6 +321,7 @@ export default {
       this.$refs[formName].validate((valid) => {
         if (valid) {
           this.editVisible = false
+          this.ruleForm.roleId = parseInt(this.ruleForm.roleId)
           userAdd(this.ruleForm).then((res) => {
             if (res.data.code === 0) {
               this.$emit('getData')

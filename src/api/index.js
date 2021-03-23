@@ -9,6 +9,10 @@ let resquest = "/api"
 export function Login (params) {
   return http.post(`${resquest}/sys/user/login`, params)
 }
+// 当前权限列表
+export function PermissionMenu (params) {
+  return http.get(`${resquest}/sys/permission/menu`, params)
+}
 // 公告管理列表
 export function noticePage (params) {
   return http.post(`${resquest}/sys/noticeManage/getNoticePage`, params)
@@ -195,19 +199,23 @@ export function accountUpdate (params) {
 }
 // 商户管理列表
 export function settingList (params) {
-  return http.post(`${resquest}/sys/finance/merch-agent/setting/list`, params)
+  return http.post(`${resquest}/sys/finance/merch/setting/list`, params)
 }
 // 商户管理新增
 export function settingSave (params) {
-  return http.post(`${resquest}/sys/finance/merch-agent/setting/save`, params)
+  return http.post(`${resquest}/sys/finance/merch/setting/save`, params)
 }
 // 商户管理编辑
 export function settingUpdate (params) {
-  return http.put(`${resquest}/sys/finance/merch-agent/setting/update`, params)
+  return http.put(`${resquest}/sys/finance/merch/setting/update`, params)
+}
+// 商户状态更新
+export function settingUpdateStatus (params) {
+  return http.put(`${resquest}/sys/finance/merch/setting/update/status`, params)
 }
 // 商户管理删除
 export function settingDelete (params) {
-  return http.delete(`${resquest}/sys/finance/merch-agent/setting/delete/${params}`,)
+  return http.delete(`${resquest}/sys/finance/merch/setting/delete/${params}`,)
 }
 // 签到活动列表
 export function getActivitySign (params) {

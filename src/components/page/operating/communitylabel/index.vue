@@ -11,6 +11,7 @@
       <div class="handle-box">
         <el-button type="primary"
                    @click="handleEdit('add')"
+                   v-allow="{name: 'operation:tag:add'}"
                    class="mr10">新增社区标签</el-button>
       </div>
       <el-table :data="tableData"
@@ -61,9 +62,11 @@
                          align="center">
           <template slot-scope="scope">
             <el-button type="text"
+                       v-allow="{name: 'operation:tag:update'}"
                        @click="handleEdit('edit',scope.$index, scope.row)">编辑</el-button>
             <el-button type="text"
                        class="red"
+                       v-allow="{name: 'operation:tag:delete'}"
                        @click="handleDelete(scope.$index, scope.row)">删除</el-button>
           </template>
         </el-table-column>
@@ -85,6 +88,7 @@
             <el-form-item label="排序"
                           prop="sequence">
               <el-input-number v-model="form.sequence"
+                               :min='1'
                                controls-position="right"
                                class="modelIpntWidth"></el-input-number>
             </el-form-item>
@@ -113,6 +117,7 @@
 </template>
 
 <script>
+import allwo from '@/utils/allow.js'
 import moment from 'moment'
 import { getTagList, addTag, updateTag } from '@/api/index';
 export default {
@@ -146,7 +151,7 @@ export default {
           { required: true, validator: validUsername, trigger: "blur" }
         ],
         description: [
-          { required: true, message: '请输入话题说明', trigger: 'blur' },
+          { required: true, message: '请输入标题说明', trigger: 'blur' },
           { max: 20, message: '最大输入20个字符', trigger: 'blur' }
         ],
         sequence: [
@@ -156,7 +161,11 @@ export default {
     };
   },
   created () {
-    this.getData();
+    allwo.Permissions('operation:tag:list').then((res) => {
+      if (res === true) {
+        this.getData();
+      }
+    })
   },
   filters: {
     formatDate: function (value) {
